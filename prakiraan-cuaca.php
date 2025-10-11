@@ -50,15 +50,15 @@ if (isset($data["lokasi"]["desa"]) && isset($data["lokasi"]["kecamatan"])) {
     echo "Kecamatan: " .
         htmlspecialchars($data["lokasi"]["kecamatan"] ?? "N/A") .
         "<br>";
-    echo "Kota/Kab: " .
+    echo "Kota/Kabupaten: " .
         htmlspecialchars($data["lokasi"]["kotkab"] ?? "N/A") .
         "<br>";
     echo "Provinsi: " .
         htmlspecialchars($data["lokasi"]["provinsi"] ?? "N/A") .
         "<br>";
-    echo "Koordinat: Lat: " .
+    echo "Koordinat Latitude: " .
         htmlspecialchars($data["lokasi"]["lat"] ?? "N/A") .
-        ", Lon: " .
+        ", Longitude: " .
         htmlspecialchars($data["lokasi"]["lon"] ?? "N/A") .
         "<br>";
     echo "Timezone: " .
@@ -87,7 +87,7 @@ if (isset($data["data"][0]["cuaca"]) && is_array($data["data"][0]["cuaca"])) {
                     ? htmlspecialchars(
                         $prakiraan["weather_desc"],
                         ENT_QUOTES,
-                        "UTF-8"
+                        "UTF-8",
                     )
                     : "Ikon Cuaca";
                 $suhu = isset($prakiraan["t"])
@@ -134,7 +134,7 @@ if (isset($data["data"][0]["cuaca"]) && is_array($data["data"][0]["cuaca"])) {
                 echo "<strong>Kelembapan:</strong> " . $kelembapan . "% | ";
                 echo "<strong>Kec. Angin:</strong> " . $kec_angin . "km/j | ";
                 echo "<strong>Arah Angin:</strong> dari " . $arah_angin . " | ";
-                echo "<strong>Jarak Pandang:</strong> dari " . $jarak_pandang;
+                echo "<strong>Jarak Pandang:</strong> " . $jarak_pandang;
                 echo "</li>";
             }
         } else {
