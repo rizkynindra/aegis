@@ -1,0 +1,23 @@
+{
+    "name": "Prakiraan Cuaca Premium BMKG",
+    "short_name": "Cuaca BMKG",
+    "description": "Aplikasi prakiraan cuaca premium menggunakan data dari BMKG Indonesia.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#38bdf8",
+    "icons": [
+        {
+            "src": "https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

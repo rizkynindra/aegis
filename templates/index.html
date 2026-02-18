@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prakiraan Cuaca Premium - BMKG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#38bdf8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cuaca BMKG">
+    <link rel="apple-touch-icon" href="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
+</head>
+
+<body>
+    <div id="loader" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Normal User Rain Warning Modal -->
+    <div id="rain-modal" class="modal-overlay">
+        <div class="modal">
+            <span class="modal-icon">☔</span>
+            <h2>Waspada Hujan!</h2>
+            <p>Perhatian! Hujan ringan diprediksi akan turun selama 3 hari berturut-turut. Tetap waspada dan pastikan
+                Anda menyiapkan payung atau jas hujan sebelum beraktivitas.</p>
+            <button class="modal-btn" onclick="closeModal('rain-modal')">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- Disaster Team Mandatory Form Modal -->
+    <div id="disaster-modal" class="modal-overlay">
+        <div class="modal">
+            <span class="modal-icon">🚨</span>
+            <h2>Tugas Siaga Bencana</h2>
+            <p>Hujan ringan diprediksi turun 3 hari ke depan. Harap isi form di bawah ini untuk konfirmasi kesiapan aksi
+                bantuan karyawan.</p>
+            <div class="form-control">
+                <label for="action-plan">Rencana Aksi:</label>
+                <textarea id="action-plan"
+                    placeholder="Contoh: Menyiapkan payung di lobby, patroli area banjir..."></textarea>
+            </div>
+            <div class="form-control">
+                <label for="team-lead">Penanggung Jawab:</label>
+                <input type="text" id="team-lead" placeholder="Nama Ketua Tim">
+            </div>
+            <button class="modal-btn" onclick="submitDisasterForm()">Kirim Laporan & Konfirmasi</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="user-bar">
+            <span>Halo, <strong>{{ user.name }}</strong> ({{ user.role }})</span>
+            <a href="/logout" class="logout-link">Keluar</a>
+        </div>
+        <h1>Weather dashboard</h1>
+        <div id="loc-text" class="location-info">Memuat lokasi...</div>
+    </header>
+
+    <main id="dashboard" class="dashboard">
+        <!-- Cards inserted by JS -->
+    </main>
+
+    <footer>
+        Data provided by BMKG Indonesia
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => {
+                        console.log('Service Worker registered', reg);
+
+                        // Check for updates periodically
+                        reg.update();
+                    })
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+
+            // Reload page when the new Service Worker takes over
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
