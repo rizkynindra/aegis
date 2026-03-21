@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cuaca BMKG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .admin-card h2 {
+            margin-top: 0;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        th {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-active { background-color: #10b981; color: white; }
+        .badge-inactive { background-color: #ef4444; color: white; }
+        
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .form-row input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+        }
+        .btn {
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background-color: #ef4444; color: white; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="user-bar">
+            <span>Halo, <strong>{{ user.name }}</strong> ({{ user.role }})</span>
+            <a href="/logout" class="logout-link">Keluar</a>
+        </div>
+        <h1>Admin Dashboard</h1>
+        <div class="location-info">Pengaturan Notifikasi & Aktivitas Tim Siaga</div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Settings Section -->
+        <div class="admin-card">
+            <h2>Kondisi Pemicu Notifikasi</h2>
+            <p style="color: #ccc; margin-bottom: 16px; font-size: 0.9em;">Tambahkan kondisi cuaca (misal: "hujan lebat", "berawan", "hujan petir") yang akan memicu notifikasi otomatis ke tim.</p>
+            
+            <form action="/admin/settings" method="POST" class="form-row" style="margin-bottom: 20px;">
+                <input type="text" name="condition" placeholder="Masukkan kondisi cuaca, cth: hujan petir" required>
+                <button type="submit" class="btn">Tambah Pemicu</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kondisi Cuaca</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for setting in settings %}
+                    <tr>
+                        <td>{{ setting.condition.title() }}</td>
+                        <td>
+                            {% if setting.is_active %}
+                            <span class="badge badge-active">Aktif</span>
+                            {% else %}
+                            <span class="badge badge-inactive">Non-aktif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="/admin/settings/{{ setting.id }}/toggle" method="POST" style="display:inline;">
+                                <button type="submit" class="btn" style="padding: 6px 10px; font-size: 0.85em;">Ubah Status</button>
+                            </form>
+                            <form action="/admin/settings/{{ setting.id }}/delete" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger" style="padding: 6px 10px; font-size: 0.85em;">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #888;">Belum ada kondisi pemicu yang diatur.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Activity Log Section -->
+        <div class="admin-card">
+            <h2>Riwayat Aktivitas Tim Siaga Bencana</h2>
+            <p style="color: #ccc; margin-bottom: 16px; font-size: 0.9em;">Menampilkan log saat notifikasi dikirim berdasarkan kondisi cuaca.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Waktu (UTC)</th>
+                        <th>Pemicu</th>
+                        <th>Pesan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td><span class="badge badge-inactive">{{ log.condition_matched.title() }}</span></td>
+                        <td>{{ log.message }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #888;">Belum ada riwayat aktivitas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        Data provided by BMKG Indonesia
+    </footer>
+</body>
+</html>

@@ -1,10 +1,15 @@
 let userRole = 'normal';
 
-function showWarning() {
+function showWarning(condition) {
     if (userRole === 'disaster') {
-        document.getElementById('disaster-modal').classList.add('active');
+        const modal = document.getElementById('disaster-modal');
+        modal.querySelector('p').textContent = `Kondisi ${condition} diprediksi terjadi 3 hari ke depan. Harap isi form di bawah ini untuk konfirmasi kesiapan aksi bantuan karyawan.`;
+        modal.classList.add('active');
     } else {
-        document.getElementById('rain-modal').classList.add('active');
+        const modal = document.getElementById('rain-modal');
+        modal.querySelector('h2').textContent = `Waspada Cuaca!`;
+        modal.querySelector('p').textContent = `Perhatian! Kondisi ${condition} diprediksi akan terjadi selama 3 hari berturut-turut. Tetap waspada dan persiapkan diri Anda sebelum beraktivitas.`;
+        modal.classList.add('active');
     }
 }
 
@@ -34,13 +39,18 @@ async function fetchWeather() {
         const userData = await userResp.json();
         userRole = userData.role || 'normal';
 
+        // Fetch active conditions from backend
+        const condResp = await fetch('/api/active-conditions');
+        const condData = await condResp.json();
+        const activeConditions = condData.conditions || ['hujan ringan'];
+
         const response = await fetch('/api/weather');
         const data = await response.json();
 
         if (data.error) throw new Error(data.error);
 
         renderWeather(data);
-        checkRainConsecutive(data);
+        checkRainConsecutive(data, activeConditions);
 
         document.getElementById('loader').style.opacity = '0';
         setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
@@ -51,23 +61,32 @@ async function fetchWeather() {
     }
 }
 
-function checkRainConsecutive(data) {
+function checkRainConsecutive(data, activeConditions) {
     const days = data.data[0].cuaca;
-    let rainStreak = 0;
 
-    for (let dayForecast of days) {
-        const hasLightRain = dayForecast.some(f =>
-            f.weather_desc.toLowerCase().includes('berawan')
-        );
+    for (let condition of activeConditions) {
+        let rainStreak = 0;
+        let shouldWarn = false;
 
-        if (hasLightRain) {
-            rainStreak++;
-            if (rainStreak >= 3) {
-                showWarning();
-                break;
+        for (let dayForecast of days) {
+            const hasCondition = dayForecast.some(f =>
+                f.weather_desc.toLowerCase().includes(condition.toLowerCase())
+            );
+
+            if (hasCondition) {
+                rainStreak++;
+                if (rainStreak >= 3) {
+                    shouldWarn = true;
+                    break;
+                }
+            } else {
+                rainStreak = 0;
             }
-        } else {
-            rainStreak = 0;
+        }
+
+        if (shouldWarn) {
+            showWarning(condition);
+            return; // Exit early once a warning condition is met
         }
     }
 }
