@@ -1,9 +1,8 @@
-const CACHE_NAME = 'weather-app-v1';
+const CACHE_NAME = 'aegis-app-v1';
 const ASSETS_TO_CACHE = [
     '/',
-    '/static/css/style.css',
     '/static/js/script.js',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap'
+    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
