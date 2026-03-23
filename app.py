@@ -433,7 +433,12 @@ async def cron_weather_check(request: Request):
         conditions_to_check = [s.condition for s in active_settings]
         
         if not conditions_to_check:
-            return {"status": "ok", "message": "No active conditions to check", **results}
+            active_event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).first()
+            if active_event:
+                active_event.is_active = False
+                active_event.resolved_at = datetime.utcnow()
+                db.commit()
+            return {"status": "ok", "message": "No active conditions to check, resolved active events", **results}
             
         async with httpx.AsyncClient() as client:
             response = await client.get(BMKG_API_URL)
@@ -443,6 +448,8 @@ async def cron_weather_check(request: Request):
             data = response.json()
             days = data.get("data", [{}])[0].get("cuaca", [])
             
+            any_triggered = False
+
             for condition in conditions_to_check:
                 results["checked"].append(condition)
                 streak = 0
@@ -454,6 +461,7 @@ async def cron_weather_check(request: Request):
                         streak += 1
                         if streak >= 3:
                             should_notify = True
+                            any_triggered = True
                             break
                     else:
                         streak = 0
@@ -500,6 +508,15 @@ async def cron_weather_check(request: Request):
                         log = ActivityLog(message=f"Terkirim ke {sent_count} perangkat", condition_matched=condition)
                         db.add(log)
                         db.commit()
+            
+            if not any_triggered:
+                active_event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).first()
+                if active_event:
+                    active_event.is_active = False
+                    active_event.resolved_at = datetime.utcnow()
+                    db.commit()
+                    results["message"] = "Weather cleared. Resolved active emergency events."
+                    
     except Exception as e:
         return {"status": "error", "message": str(e)}
     finally:
