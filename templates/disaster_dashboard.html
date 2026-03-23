@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tim Siaga Bencana - AEGIS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0606;
+            --bg-card: #1a0d0d;
+            --bg-card-alt: #241212;
+            --border: rgba(255,80,80,0.08);
+            --border-active: rgba(192,57,43,0.4);
+            --accent: #c0392b;
+            --accent-light: #e74c3c;
+            --accent-glow: rgba(192,57,43,0.15);
+            --accent-gradient: linear-gradient(135deg, #8b0000, #c0392b);
+            --green: #27ae60;
+            --green-bg: rgba(39,174,96,0.1);
+            --green-border: rgba(39,174,96,0.3);
+            --red: #e74c3c;
+            --red-bg: rgba(231,76,60,0.1);
+            --red-border: rgba(231,76,60,0.3);
+            --yellow: #f39c12;
+            --yellow-bg: rgba(243,156,18,0.1);
+            --yellow-border: rgba(243,156,18,0.3);
+            --text: #f5e6e6;
+            --text-dim: #b8a0a0;
+            --text-muted: #7a6060;
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+            background: var(--bg-card); position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-brand { font-weight: 700; font-size: 1rem; letter-spacing: 2px; }
+        .topbar-brand span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: var(--text-dim); }
+        .btn-logout {
+            color: var(--accent-light); text-decoration: none; font-weight: 600; font-size: 0.8rem;
+            padding: 6px 12px; border-radius: 8px; transition: background 0.2s;
+        }
+        .btn-logout:hover { background: rgba(231,76,60,0.1); }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+        .page-header p { color: var(--text-dim); font-size: 0.875rem; margin-top: 0.25rem; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            margin-bottom: 1.5rem; overflow: hidden; animation: fadeIn 0.5s ease-out;
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+        }
+        .card-title { font-size: 1rem; font-weight: 600; }
+        .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .card-body { padding: 1.5rem; }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; letter-spacing: 0.3px;
+        }
+        .status-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; }
+        .status-normal { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+        .status-normal::before { background: var(--green); }
+        .status-waspada { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+        .status-waspada::before { background: var(--yellow); animation: pulse 2s infinite; }
+        .status-darurat { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+        .status-darurat::before { background: var(--red); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Weather Strip */
+        .weather-strip {
+            display: flex; gap: 0.75rem; overflow-x: auto; padding: 1rem 0;
+            scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+        }
+        .weather-strip::-webkit-scrollbar { height: 4px; }
+        .weather-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .wx-chip {
+            flex-shrink: 0; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 10px; padding: 0.75rem 1rem; min-width: 130px; text-align: center;
+            transition: border-color 0.2s;
+        }
+        .wx-chip:hover { border-color: var(--border-active); }
+        .wx-chip-day { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .wx-chip-icon { width: 36px; height: 36px; margin: 0.25rem auto; display: block; filter: drop-shadow(0 0 4px rgba(192,57,43,0.2)); }
+        .wx-chip-temp { font-size: 1.1rem; font-weight: 700; margin: 0.25rem 0; }
+        .wx-chip-desc { font-size: 0.7rem; color: var(--text-dim); }
+
+        /* Task List */
+        .task-list { display: flex; flex-direction: column; gap: 1rem; }
+        .task-item {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+            padding: 1.25rem; transition: all 0.3s;
+        }
+        .task-item:hover { border-color: var(--border-active); }
+        .task-item.completed { border-color: var(--green-border); opacity: 0.7; }
+        .task-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .task-title { font-weight: 600; font-size: 0.95rem; }
+        .task-badge {
+            font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .task-badge-todo { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+        .task-badge-pending { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+        .task-badge-done { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+        .upload-area { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.75rem; }
+        .file-label {
+            background: rgba(255,255,255,0.03); padding: 0.65rem 1rem; border-radius: 8px;
+            cursor: pointer; border: 1px dashed var(--border); font-size: 0.85rem;
+            transition: all 0.2s; display: flex; align-items: center; gap: 6px; color: var(--text-dim);
+        }
+        .file-label:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); color: var(--text); }
+        input[type="file"] { display: none; }
+
+        .btn {
+            padding: 0.65rem 1.25rem; border-radius: 8px; border: none; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .btn-primary { background: var(--accent-gradient); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-success:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        .photo-preview {
+            max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px;
+            margin-top: 0.75rem; display: none; border: 1px solid var(--border);
+        }
+        .task-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+        .empty-state { text-align: center; padding: 2.5rem; color: var(--text-muted); }
+        .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; display: block; }
+
+        footer {
+            text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem;
+            border-top: 1px solid var(--border); margin-top: 2rem;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { padding: 1.25rem; }
+            .page-header h1 { font-size: 1.25rem; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .topbar { padding: 0.75rem 1.25rem; }
+            .topbar-right { font-size: 0.8rem; gap: 0.5rem; }
+            .wx-chip { min-width: 110px; padding: 0.6rem 0.75rem; }
+            .wx-chip-icon { width: 30px; height: 30px; }
+            .wx-chip-temp { font-size: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0.75rem; }
+            .topbar { padding: 0.75rem 1rem; }
+            .topbar-brand { font-size: 0.9rem; }
+            .topbar-right span { display: none; }
+            .card-body { padding: 1rem; }
+            .task-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .upload-area { flex-direction: column; align-items: stretch; }
+            .file-label { justify-content: center; padding: 0.85rem; font-size: 0.9rem; }
+            .btn { width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.9rem; }
+            .photo-preview { max-height: 150px; }
+            footer { padding: 1.5rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="topbar">
+        <div class="topbar-brand">🛡️ <span>AEGIS</span></div>
+        <div class="topbar-right">
+            <span>Tim Siaga: <strong>{{ user.name }}</strong></span>
+            <a href="/logout" class="btn-logout">Keluar</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Disaster Response Center</h1>
+            <p>Monitoring prakiraan cuaca BMKG & koordinasi SOP tindakan siaga bencana.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Prakiraan Cuaca 3 Hari</div>
+                    <div class="card-subtitle">Data langsung dari BMKG API &bull; Auto-refresh setiap jam</div>
+                </div>
+                <div id="branch-status-badge" class="status-badge status-normal">Aman</div>
+            </div>
+            <div class="card-body">
+                <div id="weather-forecast" class="weather-strip">
+                    <div class="empty-state" style="width:100;"><span class="empty-icon">📡</span> Memuat data BMKG...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Emergency Tasks (SOP Tindakan)</div>
+                    <div class="card-subtitle">Upload foto bukti tindakan, lalu tandai checklist sebagai selesai.</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="tasks-container" class="task-list">
+                    <div class="empty-state"><span class="empty-icon">✅</span>Tidak ada instruksi khusus. Kondisi masih dalam batas normal.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>Data prakiraan cuaca disediakan oleh BMKG Indonesia &bull; AEGIS &copy; 2026</footer>
+
+    <script>
+        async function fetchWeatherForecast() {
+            try {
+                const res = await fetch('/api/weather');
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                const strip = document.getElementById('weather-forecast');
+                const days = data.data[0].cuaca;
+                let html = '';
+                days.forEach((dayForecast) => {
+                    dayForecast.forEach(f => {
+                        const date = new Date(f.local_datetime);
+                        const dayLabel = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][date.getDay()];
+                        const timeLabel = f.local_datetime.split(' ')[1].substring(0, 5);
+                        html += `<div class="wx-chip"><div class="wx-chip-day">${dayLabel} ${timeLabel}</div><img class="wx-chip-icon" src="${f.image.replace(' ', '%20')}" alt=""><div class="wx-chip-temp">${f.t}°C</div><div class="wx-chip-desc">${f.weather_desc}</div></div>`;
+                    });
+                });
+                strip.innerHTML = html;
+            } catch (err) {
+                document.getElementById('weather-forecast').innerHTML = `<div class="empty-state" style="width:100%;color:var(--red);">Gagal memuat: ${err.message}</div>`;
+            }
+        }
+
+        async function fetchTasks() {
+            try {
+                const res = await fetch('/api/events/active/tasks');
+                const data = await res.json();
+                const container = document.getElementById('tasks-container');
+                const badge = document.getElementById('branch-status-badge');
+                if (!data.event_id && !data.event) {
+                    container.innerHTML = `<div class="empty-state"><span class="empty-icon">✅</span>Tidak ada instruksi khusus. Kondisi keamanan terjamin.</div>`;
+                    badge.className = 'status-badge status-normal'; badge.innerText = 'Aman'; return;
+                }
+                badge.innerText = 'STATUS ' + data.status_level.toUpperCase();
+                badge.className = data.status_level === 'Darurat' ? 'status-badge status-darurat' : 'status-badge status-waspada';
+                let html = '';
+                data.tasks.forEach((task, i) => {
+                    if (task.is_completed) {
+                        html += `<div class="task-item completed"><div class="task-row"><span class="task-title">#${i+1} ${task.title}</span><span class="task-badge task-badge-done">Selesai ✓</span></div><div class="task-meta">Diselesaikan: ${new Date(task.completed_at + 'Z').toLocaleString('id-ID')}</div><img src="${task.photo_path}" alt="Bukti" class="photo-preview" style="display:block;"></div>`;
+                    } else if (task.photo_path && !task.is_completed) {
+                        html += `<div class="task-item"><div class="task-row"><span class="task-title">#${i+1} ${task.title}</span><span class="task-badge task-badge-pending">Menunggu Checklist</span></div><div class="task-meta">Foto bukti telah diupload. Lakukan verifikasi dan tandai selesai.</div><img src="${task.photo_path}" alt="Bukti" class="photo-preview" style="display:block;"><div style="margin-top:1rem;text-align:right;"><button class="btn btn-success" onclick="checkTaskCompleted(${task.id})">✅ Tandai Selesai</button></div></div>`;
+                    } else {
+                        html += `<div class="task-item"><div class="task-row"><span class="task-title" style="color:var(--red);">#${i+1} ${task.title}</span><span class="task-badge task-badge-todo">Perlu Foto!</span></div><div class="upload-area"><label class="file-label" id="label-${task.id}"><span id="text-${task.id}">📸 Pilih/Ambil Foto</span><input type="file" id="file-${task.id}" accept="image/*" capture="environment" onchange="previewFile(${task.id})"></label><button class="btn btn-primary" onclick="uploadTaskPhoto(${task.id})">Upload Foto</button></div><img id="preview-${task.id}" class="photo-preview" src="" alt="Preview"></div>`;
+                    }
+                });
+                container.innerHTML = html;
+            } catch (error) { console.error('Error fetching tasks', error); }
+        }
+
+        function previewFile(taskId) {
+            const fileInput = document.getElementById(`file-${taskId}`);
+            const preview = document.getElementById(`preview-${taskId}`);
+            const textSpan = document.getElementById(`text-${taskId}`);
+            const label = document.getElementById(`label-${taskId}`);
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result; preview.style.display = 'block';
+                    if (textSpan) textSpan.innerHTML = `✅ ${fileInput.files[0].name.substring(0,20)}...`;
+                    label.style.borderColor = 'var(--accent)';
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+        async function uploadTaskPhoto(taskId) {
+            const fileInput = document.getElementById(`file-${taskId}`);
+            if (!fileInput || !fileInput.files[0]) { alert('Silakan pilih foto terlebih dahulu!'); return; }
+            const btn = fileInput.closest('.task-item').querySelector('.btn-primary');
+            const ogText = btn.innerText; btn.innerText = 'Mengupload...'; btn.disabled = true; btn.style.opacity = '0.5';
+            const formData = new FormData(); formData.append('photo', fileInput.files[0]);
+            try {
+                const res = await fetch(`/api/tasks/${taskId}/upload`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') { setTimeout(fetchTasks, 500); }
+                else { alert('Gagal mengupload foto.'); btn.innerText = ogText; btn.disabled = false; btn.style.opacity = '1'; }
+            } catch(error) { alert('Gagal mengirim foto: ' + error.message); btn.innerText = ogText; btn.disabled = false; btn.style.opacity = '1'; }
+        }
+
+        async function checkTaskCompleted(taskId) {
+            try {
+                const res = await fetch(`/api/tasks/${taskId}/complete`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (data.event_completed) alert('Seluruh SOP Checklist telah diselesaikan.');
+                    fetchTasks();
+                } else { alert('Gagal memvalidasi tugas.'); }
+            } catch(error) { alert('Terjadi kesalahan koneksi.'); }
+        }
+
+        fetchWeatherForecast();
+        fetchTasks();
+        setInterval(() => {
+            let busy = false;
+            document.querySelectorAll('input[type="file"]').forEach(i => { if (i.files && i.files.length > 0) busy = true; });
+            if (!busy && !document.querySelector('.btn[disabled]')) fetchTasks();
+        }, 15000);
+        setInterval(fetchWeatherForecast, 3600000);
+    </script>
+</body>
+</html>

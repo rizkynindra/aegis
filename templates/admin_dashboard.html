@@ -4,170 +4,1046 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Cuaca BMKG</title>
+    <title>Admin Dashboard - WeatherOps</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .admin-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+        :root {
+            --bg-primary: #0d0606;
+            --bg-secondary: #140a0a;
+            --bg-card: #1a0d0d;
+            --bg-hover: #241212;
+            --border: rgba(255, 80, 80, 0.08);
+            --border-active: rgba(192, 57, 43, 0.4);
+            --accent: #c0392b;
+            --accent-light: #e74c3c;
+            --accent-glow: rgba(192, 57, 43, 0.15);
+            --accent-gradient: linear-gradient(135deg, #8b0000, #c0392b);
+            --green: #27ae60;
+            --green-bg: rgba(39, 174, 96, 0.1);
+            --green-border: rgba(39, 174, 96, 0.3);
+            --red: #e74c3c;
+            --red-bg: rgba(231, 76, 60, 0.1);
+            --red-border: rgba(231, 76, 60, 0.3);
+            --yellow: #f39c12;
+            --yellow-bg: rgba(243, 156, 18, 0.1);
+            --purple: #a78bfa;
+            --purple-bg: rgba(167, 139, 250, 0.1);
+            --text-primary: #f5e6e6;
+            --text-secondary: #b8a0a0;
+            --text-muted: #7a6060;
+            --radius: 12px;
+            --radius-sm: 8px;
         }
-        .admin-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .admin-card h2 {
-            margin-top: 0;
-            color: #fff;
-            margin-bottom: 16px;
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
         }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-brand h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-brand span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0.75rem;
+            flex: 1;
+        }
+
+        .nav-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            padding: 0.5rem 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.75rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            margin-bottom: 2px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0a0f1a;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            color: var(--accent-light);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: var(--red-bg);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            transition: border-color 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-active);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .stat-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
-            color: #fff;
         }
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+
         th {
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
+            text-align: left;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.2);
             font-weight: 600;
         }
-        .badge-active { background-color: #10b981; color: white; }
-        .badge-inactive { background-color: #ef4444; color: white; }
-        
+
+        td {
+            padding: 0.85rem 1.5rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .badge-active {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid var(--green-border);
+        }
+
+        .badge-active::before {
+            background: var(--green);
+        }
+
+        .badge-inactive {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid var(--red-border);
+        }
+
+        .badge-inactive::before {
+            background: var(--red);
+        }
+
+        .badge-warning {
+            background: var(--yellow-bg);
+            color: var(--yellow);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .badge-warning::before {
+            background: var(--yellow);
+        }
+
+        .badge-normal {
+            background: var(--accent-glow);
+            color: var(--accent);
+            border: 1px solid var(--border-active);
+        }
+
+        .badge-normal::before {
+            background: var(--accent);
+        }
+
+        .badge-disaster {
+            background: var(--purple-bg);
+            color: var(--purple);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        .badge-disaster::before {
+            background: var(--purple);
+        }
+
+        .badge-admin {
+            background: var(--yellow-bg);
+            color: var(--yellow);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .badge-admin::before {
+            background: var(--yellow);
+        }
+
+        /* Form Elements */
         .form-row {
             display: flex;
-            gap: 12px;
+            gap: 0.75rem;
             align-items: center;
+            flex-wrap: wrap;
         }
-        .form-row input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.2);
+
+        .form-input,
+        .form-select {
+            padding: 0.65rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--accent);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-select {
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
             color: #fff;
         }
-        .btn {
-            background-color: #38bdf8;
-            color: #0f172a;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: opacity 0.2s;
+
+        .btn-primary:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
         }
-        .btn:hover { opacity: 0.9; }
-        .btn-danger { background-color: #ef4444; color: white; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 0.45rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid var(--red-border);
+            padding: 0.45rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-danger:hover {
+            background: rgba(248, 113, 113, 0.2);
+        }
+
+        .btn-success {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid var(--green-border);
+            padding: 0.45rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-success:hover {
+            background: rgba(52, 211, 153, 0.2);
+        }
+
+        .btn-actions {
+            display: inline-flex;
+            gap: 0.5rem;
+        }
+
+        /* Photo Gallery */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .photo-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .photo-card:hover {
+            border-color: var(--border-active);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+
+        .photo-meta {
+            padding: 1rem;
+        }
+
+        .photo-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .photo-info {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .photo-info+.photo-info {
+            margin-top: 4px;
+        }
+
+        .photo-actions {
+            padding: 0 1rem 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-overlay img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: var(--radius);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.25rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .photo-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-input,
+            .form-select {
+                width: 100%;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .btn-actions {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.75rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .photo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            th,
+            td {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .btn {
+                padding: 0.55rem 0.85rem;
+                font-size: 0.7rem;
+            }
+
+            .form-input,
+            .form-select {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card,
+        .stat-card {
+            animation: fadeIn 0.5s ease-out;
+        }
     </style>
 </head>
 
 <body>
-    <header>
-        <div class="user-bar">
-            <span>Halo, <strong>{{ user.name }}</strong> ({{ user.role }})</span>
-            <a href="/logout" class="logout-link">Keluar</a>
-        </div>
-        <h1>Admin Dashboard</h1>
-        <div class="location-info">Pengaturan Notifikasi & Aktivitas Tim Siaga</div>
-    </header>
+    <!-- Photo Preview Modal -->
+    <div class="modal-overlay" id="photoModal" onclick="this.classList.remove('active')">
+        <img id="modalImg" src="" alt="Preview">
+    </div>
 
-    <main class="admin-container">
-        <!-- Settings Section -->
-        <div class="admin-card">
-            <h2>Kondisi Pemicu Notifikasi</h2>
-            <p style="color: #ccc; margin-bottom: 16px; font-size: 0.9em;">Tambahkan kondisi cuaca (misal: "hujan lebat", "berawan", "hujan petir") yang akan memicu notifikasi otomatis ke tim.</p>
-            
-            <form action="/admin/settings" method="POST" class="form-row" style="margin-bottom: 20px;">
-                <input type="text" name="condition" placeholder="Masukkan kondisi cuaca, cth: hujan petir" required>
-                <button type="submit" class="btn">Tambah Pemicu</button>
-            </form>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🛡️ AEGIS</h2>
+                <span>Disaster Management System</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Overview</div>
+                <a href="/admin/dashboard" class="nav-item active">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a>
+                <div class="nav-label">Manajemen</div>
+                <a class="nav-item" href="#settings-section">
+                    <span class="nav-icon">⚙️</span> Pemicu Notifikasi
+                </a>
+                <a class="nav-item" href="#users-section">
+                    <span class="nav-icon">👥</span> Manajemen Pengguna
+                </a>
+                <a class="nav-item" href="#logs-section">
+                    <span class="nav-icon">📋</span> Riwayat Aktivitas
+                </a>
+                <a class="nav-item" href="#photos-section">
+                    <span class="nav-icon">📸</span> Laporan Foto
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">{{ user.name[0] }}</div>
+                    <div class="user-info">
+                        <div class="user-name">{{ user.name }}</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Kondisi Cuaca</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for setting in settings %}
-                    <tr>
-                        <td>{{ setting.condition.title() }}</td>
-                        <td>
-                            {% if setting.is_active %}
-                            <span class="badge badge-active">Aktif</span>
-                            {% else %}
-                            <span class="badge badge-inactive">Non-aktif</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <form action="/admin/settings/{{ setting.id }}/toggle" method="POST" style="display:inline;">
-                                <button type="submit" class="btn" style="padding: 6px 10px; font-size: 0.85em;">Ubah Status</button>
-                            </form>
-                            <form action="/admin/settings/{{ setting.id }}/delete" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-danger" style="padding: 6px 10px; font-size: 0.85em;">Hapus</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" style="text-align: center; color: #888;">Belum ada kondisi pemicu yang diatur.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <!-- Main -->
+        <main class="main-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                <div>
+                    <h1 style="font-size:1.75rem; font-weight:700; letter-spacing:-0.5px;">Dashboard</h1>
+                    <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0.25rem;">Monitoring sistem
+                        peringatan cuaca dan aktivitas tim siaga bencana.</p>
+                </div>
+                <div
+                    style="display:flex; align-items:center; gap:1rem; font-size:0.85rem; color:var(--text-secondary);">
+                    <span>Halo, <strong style="color:var(--text-primary);">{{ user.name }}</strong></span>
+                    <a href="/logout" class="btn-logout">Keluar</a>
+                </div>
+            </div>
 
-        <!-- Activity Log Section -->
-        <div class="admin-card">
-            <h2>Riwayat Aktivitas Tim Siaga Bencana</h2>
-            <p style="color: #ccc; margin-bottom: 16px; font-size: 0.9em;">Menampilkan log saat notifikasi dikirim berdasarkan kondisi cuaca.</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Waktu (UTC)</th>
-                        <th>Pemicu</th>
-                        <th>Pesan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                        <td><span class="badge badge-inactive">{{ log.condition_matched.title() }}</span></td>
-                        <td>{{ log.message }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" style="text-align: center; color: #888;">Belum ada riwayat aktivitas.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </main>
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Pemicu Aktif</div>
+                    <div class="stat-value" style="color: var(--accent);">{{ settings | selectattr('is_active') | list |
+                        length }}</div>
+                    <div class="stat-subtitle">dari {{ settings | length }} kondisi total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Pengguna</div>
+                    <div class="stat-value" style="color: var(--purple);">{{ users | length }}</div>
+                    <div class="stat-subtitle">terdaftar di sistem</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Log Terkirim</div>
+                    <div class="stat-value" style="color: var(--green);">{{ logs | length }}</div>
+                    <div class="stat-subtitle">notifikasi terbaru</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Laporan Foto</div>
+                    <div class="stat-value" style="color: var(--yellow);">{{ recent_tasks | length }}</div>
+                    <div class="stat-subtitle">bukti tindakan diunggah</div>
+                </div>
+            </div>
 
-    <footer>
-        Data provided by BMKG Indonesia
-    </footer>
+            <!-- Notification Triggers -->
+            <div class="card" id="settings-section">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Kondisi Pemicu Notifikasi</div>
+                        <div class="card-subtitle">Pilih kondisi cuaca BMKG yang akan memicu notifikasi saat terjadi 3
+                            hari berturut-turut.</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/settings" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
+                        <select name="condition" class="form-select" required style="flex: 1; min-width: 200px;">
+                            <option value="" disabled selected>-- Pilih Kondisi Cuaca --</option>
+                            <option value="cerah">Cerah</option>
+                            <option value="cerah berawan">Cerah Berawan</option>
+                            <option value="berawan">Berawan</option>
+                            <option value="berawan tebal">Berawan Tebal</option>
+                            <option value="udara kabur">Udara Kabur</option>
+                            <option value="asap">Asap</option>
+                            <option value="kabut">Kabut</option>
+                            <option value="hujan ringan">Hujan Ringan</option>
+                            <option value="hujan sedang">Hujan Sedang</option>
+                            <option value="hujan lebat">Hujan Lebat</option>
+                            <option value="hujan lokal">Hujan Lokal</option>
+                            <option value="hujan petir">Hujan Petir</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">+ Tambah Pemicu</button>
+                    </form>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kondisi Cuaca</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for setting in settings %}
+                        <tr>
+                            <td style="font-weight: 500; color: var(--text-primary);">{{ setting.condition.title() }}
+                            </td>
+                            <td>
+                                {% if setting.is_active %}
+                                <span class="badge badge-active">Aktif</span>
+                                {% else %}
+                                <span class="badge badge-inactive">Non-aktif</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <div class="btn-actions">
+                                    <form action="/admin/settings/{{ setting.id }}/toggle" method="POST"
+                                        style="display:inline;">
+                                        <button type="submit" class="btn btn-ghost">Ubah Status</button>
+                                    </form>
+                                    <form action="/admin/settings/{{ setting.id }}/delete" method="POST"
+                                        style="display:inline;"
+                                        onsubmit="return confirm('Hapus pemicu \'{{ setting.condition.title() }}\'?');">
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">
+                                    <div class="empty-icon">⚙️</div>Belum ada kondisi pemicu.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- User Management -->
+            <div class="card" id="users-section">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Manajemen Pengguna</div>
+                        <div class="card-subtitle">Tambah, ubah role, atau hapus pengguna dalam sistem.</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/users/add" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
+                        <input type="text" name="name" class="form-input" placeholder="Nama Lengkap" required
+                            style="flex: 1;">
+                        <input type="text" name="username" class="form-input" placeholder="Username" required
+                            style="flex: 1;">
+                        <input type="password" name="password" class="form-input" placeholder="Password" required
+                            style="flex: 1;">
+                        <select name="role" class="form-select" required>
+                            <option value="normal">Normal User</option>
+                            <option value="disaster">Tim Siaga (KTD)</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">+ Tambah User</button>
+                    </form>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nama</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th style="text-align: right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td style="color: var(--text-muted);">#{{ u.id }}</td>
+                            <td style="font-weight: 500; color: var(--text-primary);">{{ u.name }}</td>
+                            <td>{{ u.username }}</td>
+                            <td>
+                                {% if u.role == 'admin' %}
+                                <span class="badge badge-admin">Admin</span>
+                                {% elif u.role == 'disaster' %}
+                                <span class="badge badge-disaster">Tim Siaga</span>
+                                {% else %}
+                                <span class="badge badge-normal">Normal</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                {% if u.role != 'admin' %}
+                                <div class="btn-actions">
+                                    <form action="/admin/users/{{ u.id }}/update-role" method="POST"
+                                        style="display:inline-flex; align-items:center; gap: 0.5rem;">
+                                        <select name="role" class="form-select"
+                                            style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">
+                                            <option value="normal" {% if u.role=='normal' %}selected{% endif %}>Normal
+                                            </option>
+                                            <option value="disaster" {% if u.role=='disaster' %}selected{% endif %}>Tim
+                                                Siaga</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-success">Simpan</button>
+                                    </form>
+                                    <form action="/admin/users/{{ u.id }}/delete" method="POST" style="display:inline;"
+                                        onsubmit="return confirm('Hapus user {{ u.name }}?');">
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-icon">👥</div>Belum ada pengguna.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Activity Logs -->
+            <div class="card" id="logs-section">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Riwayat Aktivitas</div>
+                        <div class="card-subtitle">Log notifikasi yang dikirim berdasarkan kondisi cuaca terdeteksi.
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Pemicu</th>
+                            <th>Pesan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td style="white-space: nowrap;">{{ log.timestamp.strftime('%d %b %Y, %H:%M') }}</td>
+                            <td><span class="badge badge-warning">{{ log.condition_matched.title() }}</span></td>
+                            <td>{{ log.message }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">
+                                    <div class="empty-icon">📋</div>Belum ada riwayat aktivitas.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Photo Reports -->
+            <div class="card" id="photos-section">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Laporan Foto Tindakan Siaga</div>
+                        <div class="card-subtitle">Bukti foto tindakan Tim KTD. Klik foto untuk memperbesar. Admin dapat
+                            menghapus foto jika diperlukan.</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="photo-grid">
+                        {% for task in recent_tasks %}
+                        <div class="photo-card">
+                            <img src="{{ task.photo_path }}" alt="Bukti Foto" onclick="openPhoto(this.src)">
+                            <div class="photo-meta">
+                                <div class="photo-title">{{ task.title }}</div>
+                                <div class="photo-info">
+                                    <span>🕐</span>
+                                    {% if task.completed_at %}
+                                    {{ task.completed_at.strftime('%d %b %Y, %H:%M:%S') }}
+                                    {% else %}
+                                    Belum selesai
+                                    {% endif %}
+                                </div>
+                                <div class="photo-info">
+                                    <span>👤</span> Tim KTD #{{ task.completed_by or 'N/A' }}
+                                </div>
+                                <div class="photo-info">
+                                    <span>📋</span>
+                                    {% if task.is_completed %}
+                                    <span class="badge badge-active">Selesai</span>
+                                    {% else %}
+                                    <span class="badge badge-warning">Menunggu Checklist</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="photo-actions">
+                                <form action="/admin/tasks/{{ task.id }}/delete-photo" method="POST"
+                                    onsubmit="return confirm('Yakin ingin menghapus foto ini? Task akan direset dan perlu upload ulang.');">
+                                    <button type="submit" class="btn btn-danger" style="width: 100%;">🗑 Hapus
+                                        Foto</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div style="grid-column: 1 / -1;">
+                            <div class="empty-state">
+                                <div class="empty-icon">📸</div>Belum ada foto laporan tindakan yang diunggah.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function openPhoto(src) {
+            const modal = document.getElementById('photoModal');
+            document.getElementById('modalImg').src = src;
+            modal.classList.add('active');
+        }
+    </script>
 </body>
+
 </html>

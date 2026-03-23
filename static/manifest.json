@@ -1,6 +1,6 @@
 {
-    "name": "Prakiraan Cuaca Premium BMKG",
-    "short_name": "Cuaca BMKG",
+    "name": "AEGIS",
+    "short_name": "AEGIS",
     "description": "Aplikasi prakiraan cuaca premium menggunakan data dari BMKG Indonesia.",
     "start_url": "/",
     "display": "standalone",

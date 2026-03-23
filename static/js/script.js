@@ -101,43 +101,47 @@ function renderWeather(data) {
     const days = data.data[0].cuaca;
     days.forEach((dayForecast, dayIdx) => {
         const dayHeader = document.createElement('div');
-        dayHeader.className = 'day-separator';
+        dayHeader.className = 'day-label';
         dayHeader.textContent = `Prakiraan Hari ke-${dayIdx + 1}`;
         dashboard.appendChild(dayHeader);
 
+        const grid = document.createElement('div');
+        grid.className = 'weather-grid';
+
         dayForecast.forEach(f => {
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = 'weather-card';
             card.innerHTML = `
-                <div class="card-header">
-                    <span class="time">${f.local_datetime.split(' ')[1].substring(0, 5)}</span>
-                    <span class="condition">${f.weather_desc}</span>
+                <div class="wc-header">
+                    <span class="wc-time">${f.local_datetime.split(' ')[1].substring(0, 5)}</span>
+                    <span class="wc-desc">${f.weather_desc}</span>
                 </div>
-                <div class="main-stat">
-                    <img src="${f.image.replace(' ', '%20')}" class="weather-icon" alt="icon">
-                    <span class="temp">${f.t}°C</span>
+                <div class="wc-main">
+                    <img src="${f.image.replace(' ', '%20')}" class="wc-icon" alt="icon">
+                    <span class="wc-temp">${f.t}°C</span>
                 </div>
-                <div class="details">
-                    <div class="detail-item">
-                        <span class="detail-label">Kelembapan</span>
-                        <span class="detail-value">${f.hu}%</span>
+                <div class="wc-details">
+                    <div>
+                        <div class="wc-detail-label">Kelembapan</div>
+                        <div class="wc-detail-value">${f.hu}%</div>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Angin</span>
-                        <span class="detail-value">${f.ws} km/h ${f.wd}</span>
+                    <div>
+                        <div class="wc-detail-label">Angin</div>
+                        <div class="wc-detail-value">${f.ws} km/h ${f.wd}</div>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Visibility</span>
-                        <span class="detail-value">${f.vs_text}</span>
+                    <div>
+                        <div class="wc-detail-label">Jarak Pandang</div>
+                        <div class="wc-detail-value">${f.vs_text}</div>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Terakhir Update</span>
-                        <span class="detail-value">${f.analysis_date.substring(11, 16)}</span>
+                    <div>
+                        <div class="wc-detail-label">Update</div>
+                        <div class="wc-detail-value">${f.analysis_date.substring(11, 16)}</div>
                     </div>
                 </div>
             `;
-            dashboard.appendChild(card);
+            grid.appendChild(card);
         });
+        dashboard.appendChild(grid);
     });
 }
 
