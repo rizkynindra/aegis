@@ -16,11 +16,11 @@
       "src": "/(.*)",
       "dest": "app.py"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/weather-check",
-      "schedule": "0 * * * *"
-    }
   ]
+  // "crons": [
+  //   {
+  //     "path": "/api/cron/weather-check",
+  //     "schedule": "0 * * * *"
+  //   }
+  // ]
 }
