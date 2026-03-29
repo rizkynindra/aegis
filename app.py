@@ -93,47 +93,48 @@ async def startup_event():
             db.add(NotificationSetting(condition="hujan ringan", is_active=True))
             db.commit()
         
-        # Seed specialized tasks for each category if empty
-        if not db.query(TaskTemplate).first():
-            category_tasks = {
-                "Pimpinan Pengendali (Kacab)": "Monitoring Situasi & Pengambilan Keputusan",
-                "Koordinator Penanggulangan & Pengamanan (Kabeng)": "Koordinasi dan Pengerahan Tim",
-                "Koordinator Evakuasi & Penyelamatan": "Pengawasan Jalur Evakuasi dan Titik Kumpul",
-                "Tim Komunikasi": "Menghubungi Instansi Terkait (Damkar, Polisi, PLN, RS)",
-                "Tim Pelaksana / Fire & Floods": "Pengecekan Kesiapan APAR/Hydrant & Tanggul",
-                "Tim Keamanan (Security)": "Pengamanan Area dan Aset Kantor",
-                "Tim Listrik & Sarana": "Pemutusan Arus Listrik Utama (Panel)",
-                "Tim P3K & P3GD": "Penyiapan Posko Medis dan Alat P3K",
-                "Tim Karyawan & Logistik": "Penyiapan Bahan Makanan dan Konsumsi Darurat",
-                "Tim Barang Inventaris & Dokumen": "Penyelamatan Dokumen Penting dan Backup Data",
-                "Tim Kendaraan": "Pemindahan Kendaraan ke Area Aman"
-            }
-            
-            # Fetch categories to get IDs
-            all_cats = db.query(TeamCategory).all()
-            cat_map = {c.name.split(' (')[0].split(' / ')[-1] if ' / ' in c.name else c.name.split(' (')[0]: c.id for c in all_cats}
-            # Simplified map for robustness
-            cat_map = {c.name: c.id for c in all_cats}
+        # Seed specialized tasks for each category
+        all_cats = db.query(TeamCategory).all()
+        cat_map = {c.name: c.id for c in all_cats}
+        
+        category_tasks = {
+            "Pimpinan Pengendali (Kacab)": "Monitoring Situasi & Pengambilan Keputusan",
+            "Koordinator Penanggulangan & Pengamanan (Kabeng)": "Koordinasi dan Pengerahan Tim",
+            "Koordinator Evakuasi & Penyelamatan": "Pengawasan Jalur Evakuasi dan Titik Kumpul",
+            "Tim Komunikasi": "Menghubungi Instansi Terkait (Damkar, Polisi, PLN, RS)",
+            "Tim Pelaksana / Fire & Floods": "Pengecekan Kesiapan APAR/Hydrant & Tanggul",
+            "Tim Keamanan (Security)": "Pengamanan Area dan Aset Kantor",
+            "Tim Listrik & Sarana": "Pemutusan Arus Listrik Utama (Panel)",
+            "Tim P3K & P3GD": "Penyiapan Posko Medis dan Alat P3K",
+            "Tim Karyawan & Logistik": "Penyiapan Bahan Makanan dan Konsumsi Darurat",
+            "Tim Barang Inventaris & Dokumen": "Penyelamatan Dokumen Penting dan Backup Data",
+            "Tim Kendaraan": "Pemindahan Kendaraan ke Area Aman"
+        }
 
-            task_templates = []
-            for cat_name, task_title in category_tasks.items():
-                cat_id = cat_map.get(cat_name)
-                task_templates.append(TaskTemplate(
-                    status_level="Waspada", 
-                    team_category_id=cat_id, 
-                    title=task_title, 
-                    description=f"Instruksi khusus untuk {cat_name} berdasarkan SOP Job Desk.",
-                    requires_photo=True
-                ))
+        for cat_name, task_title in category_tasks.items():
+            cat_id = cat_map.get(cat_name)
+            if not cat_id: continue
             
-            # Also add for other levels for completeness
-            for cat_name, task_title in category_tasks.items():
-                cat_id = cat_map.get(cat_name)
-                task_templates.append(TaskTemplate(status_level="Siaga", team_category_id=cat_id, title=f"SIAGA: {task_title}"))
-                task_templates.append(TaskTemplate(status_level="Darurat", team_category_id=cat_id, title=f"DARURAT: {task_title}"))
+            # Check all levels and sync
+            for level in ["Waspada", "Siaga", "Darurat"]:
+                full_title = f"SIAGA: {task_title}" if level == "Siaga" else (f"DARURAT: {task_title}" if level == "Darurat" else task_title)
+                
+                # Deduplication check
+                exists = db.query(TaskTemplate).filter(
+                    TaskTemplate.status_level == level, 
+                    TaskTemplate.team_category_id == cat_id,
+                    TaskTemplate.title == full_title
+                ).first()
 
-            db.add_all(task_templates)
-            db.commit()
+                if not exists:
+                    db.add(TaskTemplate(
+                        status_level=level,
+                        team_category_id=cat_id,
+                        title=full_title,
+                        description=f"Instruksi khusus untuk {cat_name} berdasarkan SOP Job Desk.",
+                        requires_photo=True
+                    ))
+        db.commit()
     finally:
         db.close()
 
