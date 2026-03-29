@@ -722,6 +722,9 @@
                 <a class="nav-item" href="#users-section">
                     <span class="nav-icon">👥</span> Manajemen Pengguna
                 </a>
+                <a class="nav-item" href="#categories-section">
+                    <span class="nav-icon">🏷️</span> Kategori Tim KTD
+                </a>
                 <a class="nav-item" href="#logs-section">
                     <span class="nav-icon">📋</span> Riwayat Aktivitas
                 </a>
@@ -856,26 +859,75 @@
                 </table>
             </div>
 
+            <!-- Team Categories Management -->
+            <div class="card" id="categories-section">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Kategori Tim Tanggap Darurat</div>
+                        <div class="card-subtitle">Daftar kategori spesifik untuk pembagian tugas tim KTD.</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/categories/add" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
+                        <input type="text" name="name" class="form-input" placeholder="Nama Kategori Baru (misal: Tim Evakuasi)" required style="flex: 1;">
+                        <button type="submit" class="btn btn-primary">+ Tambah Kategori</button>
+                    </form>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nama Kategori</th>
+                            <th style="text-align: right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td style="color: var(--text-muted);">#{{ cat.id }}</td>
+                            <td style="font-weight: 500; color: var(--text-primary);">{{ cat.name }}</td>
+                            <td style="text-align: right;">
+                                <form action="/admin/categories/{{ cat.id }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus kategori {{ cat.name }}? Semua user dalam kategori ini akan di-reset kategorinya.');">
+                                    <button type="submit" class="btn btn-danger">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🏷️</div>Belum ada kategori tim.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
             <!-- User Management -->
             <div class="card" id="users-section">
                 <div class="card-header">
                     <div>
                         <div class="card-title">Manajemen Pengguna</div>
-                        <div class="card-subtitle">Tambah, ubah role, atau hapus pengguna dalam sistem.</div>
+                        <div class="card-subtitle">Tambah, ubah role, atau hapus pengguna dalam sistem menggunakan Employee ID.</div>
                     </div>
                 </div>
                 <div class="card-body">
                     <form action="/admin/users/add" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
-                        <input type="text" name="name" class="form-input" placeholder="Nama Lengkap" required
-                            style="flex: 1;">
-                        <input type="text" name="username" class="form-input" placeholder="Username" required
-                            style="flex: 1;">
-                        <input type="password" name="password" class="form-input" placeholder="Password" required
-                            style="flex: 1;">
-                        <select name="role" class="form-select" required>
+                        <input type="text" name="employee_id" class="form-input" placeholder="Employee ID (Login)" required style="flex: 1;">
+                        <input type="text" name="name" class="form-input" placeholder="Nama Lengkap" required style="flex: 1;">
+                        <input type="password" name="password" class="form-input" placeholder="Password" required style="flex: 1;">
+                        <select name="role" id="role-select" class="form-select" required onchange="toggleCategorySelect(this.value)">
                             <option value="normal">Normal User</option>
                             <option value="disaster">Tim Siaga (KTD)</option>
                             <option value="admin">Admin</option>
+                        </select>
+                        <select name="team_category_id" id="category-select" class="form-select" style="display: none;">
+                            <option value="" selected>-- Pilih Kategori Tim --</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
                         </select>
                         <button type="submit" class="btn btn-primary">+ Tambah User</button>
                     </form>
@@ -883,27 +935,31 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Emp ID</th>
                             <th>Nama</th>
-                            <th>Username</th>
-                            <th>Role</th>
+                            <th>Role & Kategori</th>
                             <th style="text-align: right;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for u in users %}
                         <tr>
-                            <td style="color: var(--text-muted);">#{{ u.id }}</td>
-                            <td style="font-weight: 500; color: var(--text-primary);">{{ u.name }}</td>
-                            <td>{{ u.username }}</td>
+                        <tr>
+                            <td style="font-weight: 600; color: var(--text-primary);">{{ u.employee_id }}</td>
+                            <td style="color: var(--text-secondary);">{{ u.name }}</td>
                             <td>
-                                {% if u.role == 'admin' %}
-                                <span class="badge badge-admin">Admin</span>
-                                {% elif u.role == 'disaster' %}
-                                <span class="badge badge-disaster">Tim Siaga</span>
-                                {% else %}
-                                <span class="badge badge-normal">Normal</span>
-                                {% endif %}
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    {% if u.role == 'admin' %}
+                                    <span class="badge badge-admin">Admin</span>
+                                    {% elif u.role == 'disaster' %}
+                                    <span class="badge badge-disaster">Tim Siaga</span>
+                                    {% if u.team_category %}
+                                    <span style="font-size: 0.7rem; color: var(--purple); font-weight: 500;">📌 {{ u.team_category.name }}</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge badge-normal">Normal</span>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td style="text-align: right;">
                                 {% if u.role != 'admin' %}
@@ -1005,7 +1061,10 @@
                                     {% endif %}
                                 </div>
                                 <div class="photo-info">
-                                    <span>👤</span> Tim KTD #{{ task.completed_by or 'N/A' }}
+                                    <span>👤</span> {{ task.user.name if task.user else 'N/A' }} 
+                                    {% if task.team_category %}
+                                    <br><span style="margin-left:1.2rem; font-size:0.7rem; color:var(--purple);">🏷️ {{ task.team_category.name }}</span>
+                                    {% endif %}
                                 </div>
                                 <div class="photo-info">
                                     <span>📋</span>
@@ -1042,6 +1101,17 @@
             const modal = document.getElementById('photoModal');
             document.getElementById('modalImg').src = src;
             modal.classList.add('active');
+        }
+
+        function toggleCategorySelect(role) {
+            const catSelect = document.getElementById('category-select');
+            if (role === 'disaster') {
+                catSelect.style.display = 'block';
+                catSelect.required = true;
+            } else {
+                catSelect.style.display = 'none';
+                catSelect.required = false;
+            }
         }
     </script>
 </body>

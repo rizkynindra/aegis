@@ -9,11 +9,14 @@ import json
 import httpx
 import asyncio
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from pywebpush import webpush, WebPushException
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from database import engine, Base, get_db, SessionLocal
-from database import User, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask
+from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask
 
 app = FastAPI()
 
@@ -21,12 +24,12 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 # ─── Environment Variables ───────────────────────────────────────────────────
-VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BKwh-BREF31n5SfXUi7Te1v7iPxBIP2zgGL-Fcgw5OPG_nQa2xBswX2iO5SaiOk-su8b8hp_myMCDBFF3fL1_kU")
-VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "nBEW3RwL9Z7NHFZQ0KrfAbgA9Uh6ONa9FavzG2CVbrk")
-VAPID_CLAIMS = {"sub": os.environ.get("VAPID_CONTACT", "mailto:admin@example.com")}
-SESSION_SECRET = os.environ.get("SESSION_SECRET", "super-secret-key-change-in-production")
-BMKG_API_URL = os.environ.get("BMKG_API_URL", "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=51.71.04.1007")
-CRON_SECRET = os.environ.get("CRON_SECRET", "")  # Protect cron endpoint in production
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
+VAPID_CLAIMS = {"sub": f"mailto:{os.environ.get('VAPID_EMAIL', 'admin@aegis.corp')}"}
+SESSION_SECRET = os.environ.get("SESSION_SECRET", "super-secret-aegis-key")
+BMKG_API_URL = os.environ.get("BMKG_API_URL", "https://data.bmkg.go.id/DataMKG/MEWS/DigitalForecast/DigitalForecast-Bali.xml")
+CRON_SECRET = os.environ.get("CRON_SECRET") 
 
 # ─── Middleware ──────────────────────────────────────────────────────────────
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
@@ -50,29 +53,85 @@ def require_role(request: Request, role: str):
 async def startup_event():
     db = SessionLocal()
     try:
-        # Seed default users
+        # Seed categories if empty
+        if not db.query(TeamCategory).first():
+            categories = [
+                "Pimpinan Pengendali (Kacab)",
+                "Koordinator Penanggulangan & Pengamanan (Kabeng)",
+                "Koordinator Evakuasi & Penyelamatan",
+                "Tim Komunikasi",
+                "Tim Pelaksana / Fire & Floods",
+                "Tim Keamanan (Security)",
+                "Tim Listrik & Sarana",
+                "Tim P3K & P3GD",
+                "Tim Karyawan & Logistik",
+                "Tim Barang Inventaris & Dokumen",
+                "Tim Kendaraan"
+            ]
+            db.add_all([TeamCategory(name=cat) for cat in categories])
+            db.commit()
+
+        # Seed default users & Migration
         if not db.query(User).first():
             default_users = [
-                User(username="admin", password="123", role="admin", name="Administrator"),
-                User(username="user", password="123", role="normal", name="Normal User"),
-                User(username="disaster", password="123", role="disaster", name="Disaster Team")
+                User(employee_id="admin", username="admin", password="123", role="admin", name="Administrator"),
+                User(employee_id="user", username="user", password="123", role="normal", name="Normal User"),
+                User(employee_id="disaster", username="disaster", password="123", role="disaster", name="Disaster Team")
             ]
             db.add_all(default_users)
             db.commit()
+        else:
+            # Migration: Ensure all users have employee_id
+            users_to_migrate = db.query(User).filter(User.employee_id == None).all()
+            if users_to_migrate:
+                for u in users_to_migrate:
+                    u.employee_id = u.username
+                db.commit()
         
         # Seed default setting if empty
         if not db.query(NotificationSetting).first():
             db.add(NotificationSetting(condition="hujan ringan", is_active=True))
             db.commit()
         
-        # Seed default templates if empty
+        # Seed specialized tasks for each category if empty
         if not db.query(TaskTemplate).first():
-            task_templates = [
-                TaskTemplate(status_level="Waspada", title="Cek Dokumen Penting", description="Pindahkan dokumen penting ke tempat yang lebih tinggi.", requires_photo=True),
-                TaskTemplate(status_level="Waspada", title="Cek Pompa Air", description="Pastikan pompa air berfungsi dengan baik.", requires_photo=True),
-                TaskTemplate(status_level="Siaga", title="Matikan Listrik Lantai 1", description="Pastikan panel listrik utama di lantai 1 telah dimatikan.", requires_photo=True),
-                TaskTemplate(status_level="Darurat", title="Evakuasi", description="Pastikan semua karyawan telah dievakuasi.", requires_photo=True)
-            ]
+            category_tasks = {
+                "Pimpinan Pengendali (Kacab)": "Monitoring Situasi & Pengambilan Keputusan",
+                "Koordinator Penanggulangan & Pengamanan (Kabeng)": "Koordinasi dan Pengerahan Tim",
+                "Koordinator Evakuasi & Penyelamatan": "Pengawasan Jalur Evakuasi dan Titik Kumpul",
+                "Tim Komunikasi": "Menghubungi Instansi Terkait (Damkar, Polisi, PLN, RS)",
+                "Tim Pelaksana / Fire & Floods": "Pengecekan Kesiapan APAR/Hydrant & Tanggul",
+                "Tim Keamanan (Security)": "Pengamanan Area dan Aset Kantor",
+                "Tim Listrik & Sarana": "Pemutusan Arus Listrik Utama (Panel)",
+                "Tim P3K & P3GD": "Penyiapan Posko Medis dan Alat P3K",
+                "Tim Karyawan & Logistik": "Penyiapan Bahan Makanan dan Konsumsi Darurat",
+                "Tim Barang Inventaris & Dokumen": "Penyelamatan Dokumen Penting dan Backup Data",
+                "Tim Kendaraan": "Pemindahan Kendaraan ke Area Aman"
+            }
+            
+            # Fetch categories to get IDs
+            all_cats = db.query(TeamCategory).all()
+            cat_map = {c.name.split(' (')[0].split(' / ')[-1] if ' / ' in c.name else c.name.split(' (')[0]: c.id for c in all_cats}
+            # Simplified map for robustness
+            cat_map = {c.name: c.id for c in all_cats}
+
+            task_templates = []
+            for cat_name, task_title in category_tasks.items():
+                cat_id = cat_map.get(cat_name)
+                task_templates.append(TaskTemplate(
+                    status_level="Waspada", 
+                    team_category_id=cat_id, 
+                    title=task_title, 
+                    description=f"Instruksi khusus untuk {cat_name} berdasarkan SOP Job Desk.",
+                    requires_photo=True
+                ))
+            
+            # Also add for other levels for completeness
+            for cat_name, task_title in category_tasks.items():
+                cat_id = cat_map.get(cat_name)
+                task_templates.append(TaskTemplate(status_level="Siaga", team_category_id=cat_id, title=f"SIAGA: {task_title}"))
+                task_templates.append(TaskTemplate(status_level="Darurat", team_category_id=cat_id, title=f"DARURAT: {task_title}"))
+
             db.add_all(task_templates)
             db.commit()
     finally:
@@ -96,9 +155,10 @@ async def login_get(request: Request):
 
 @app.post("/login")
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username).first()
+    # "username" parameter from HTML form now refers to Employee ID
+    user = db.query(User).filter(User.employee_id == username).first()
     if user and user.password == password:
-        request.session["user"] = {"username": user.username, "role": user.role, "name": user.name}
+        request.session["user"] = {"username": user.employee_id, "role": user.role, "name": user.name}
         if user.role == "admin":
             return RedirectResponse(url="/admin/dashboard", status_code=303)
         if user.role == "disaster":
@@ -210,6 +270,7 @@ async def create_emergency_event(status_level: str = Form(...), db: Session = De
         task = EmergencyTask(
             event_id=event.id,
             template_id=template.id,
+            team_category_id=template.team_category_id,
             title=template.title
         )
         db.add(task)
@@ -217,12 +278,23 @@ async def create_emergency_event(status_level: str = Form(...), db: Session = De
     return {"status": "success", "event_id": event.id, "tasks_created": len(tmpl)}
 
 @app.get("/api/events/active/tasks")
-async def get_active_event_tasks(db: Session = Depends(get_db)):
+async def get_active_event_tasks(request: Request, db: Session = Depends(get_db)):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    
     event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).order_by(EmergencyEvent.id.desc()).first()
     if not event:
         return {"tasks": [], "event": None}
     
-    tasks = db.query(EmergencyTask).filter(EmergencyTask.event_id == event.id).all()
+    # Filter tasks by user category
+    query = db.query(EmergencyTask).filter(EmergencyTask.event_id == event.id)
+    if user.role != "admin" and user.team_category_id:
+        query = query.filter(EmergencyTask.team_category_id == user.team_category_id)
+    
+    tasks = query.all()
     task_list = []
     for t in tasks:
         task_list.append({
@@ -234,6 +306,63 @@ async def get_active_event_tasks(db: Session = Depends(get_db)):
             "completed_by": t.completed_by
         })
     return {"event_id": event.id, "status_level": event.status_level, "tasks": task_list}
+
+@app.post("/api/tasks/{task_id}/report")
+async def report_task_completion(
+    request: Request,
+    task_id: int,
+    content: str = Form(...),
+    actions_taken: str = Form(""),
+    planned_actions: str = Form(""),
+    monitoring_notes: str = Form(""),
+    photo: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    
+    task = db.query(EmergencyTask).filter(EmergencyTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Update task with report fields
+    task.report_content = content
+    task.actions_taken = actions_taken
+    task.planned_actions = planned_actions
+    task.monitoring_notes = monitoring_notes
+    task.is_completed = True
+    task.completed_at = datetime.utcnow()
+    task.completed_by = user.id
+
+    if photo:
+        contents = await photo.read()
+        task.photo_path = f"data:image/jpeg;base64,{base64.b64encode(contents).decode()}"
+    
+    db.commit()
+    return {"status": "success", "message": "Zadatak i izvješće su uspješno spremljeni"}
+
+@app.get("/api/incidents/recent")
+async def get_recent_incidents(db: Session = Depends(get_db)):
+    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    # Fetch tasks that have report content (merged system)
+    tasks = db.query(EmergencyTask).filter(
+        EmergencyTask.report_content != None,
+        EmergencyTask.completed_at >= one_month_ago
+    ).order_by(EmergencyTask.completed_at.desc()).all()
+    
+    return [{
+        "id": t.id,
+        "title": t.title,
+        "content": t.report_content,
+        "author": t.user.name if t.user else "N/A",
+        "timestamp": t.completed_at.strftime("%d %b %Y, %H:%M"),
+        "actions_taken": t.actions_taken,
+        "planned_actions": t.planned_actions,
+        "monitoring_notes": t.monitoring_notes
+    } for t in tasks]
 
 @app.post("/api/tasks/{task_id}/upload")
 async def upload_task_photo(
@@ -299,7 +428,8 @@ async def complete_task(
 # ─── Routes: Admin Dashboard ────────────────────────────────────────────────
 @app.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
-    user = require_role(request, "admin")
+    user_session = require_role(request, "admin")
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
     
     settings = db.query(NotificationSetting).order_by(NotificationSetting.id.desc()).all()
     logs = db.query(ActivityLog).order_by(ActivityLog.timestamp.desc()).limit(10).all()
@@ -309,6 +439,7 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     ).order_by(EmergencyTask.completed_at.desc()).limit(20).all()
     
     users = db.query(User).order_by(User.id).all()
+    categories = db.query(TeamCategory).order_by(TeamCategory.name).all()
     
     return templates.TemplateResponse("admin_dashboard.html", {
         "request": request, 
@@ -316,12 +447,14 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
         "settings": settings,
         "logs": logs,
         "recent_tasks": recent_tasks,
-        "users": users
+        "users": users,
+        "categories": categories
     })
 
 @app.get("/disaster/dashboard", response_class=HTMLResponse)
 async def disaster_dashboard(request: Request, db: Session = Depends(get_db)):
-    user = require_role(request, "disaster")
+    user_session = require_role(request, "disaster")
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
     
     event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).order_by(EmergencyEvent.id.desc()).first()
     
@@ -375,17 +508,26 @@ async def admin_delete_task_photo(request: Request, task_id: int, db: Session = 
 @app.post("/admin/users/add")
 async def admin_add_user(
     request: Request,
-    username: str = Form(...),
+    employee_id: str = Form(...),
     password: str = Form(...),
     name: str = Form(...),
     role: str = Form(...),
+    team_category_id: int = Form(None),
     db: Session = Depends(get_db)
 ):
     require_role(request, "admin")
-    existing = db.query(User).filter(User.username == username).first()
+    existing = db.query(User).filter(User.employee_id == employee_id).first()
     if existing:
         return RedirectResponse(url="/admin/dashboard#users-section", status_code=303)
-    new_user = User(username=username, password=password, name=name, role=role)
+    
+    new_user = User(
+        employee_id=employee_id, 
+        username=employee_id, 
+        password=password, 
+        name=name, 
+        role=role,
+        team_category_id=team_category_id if role == "disaster" else None
+    )
     db.add(new_user)
     db.commit()
     return RedirectResponse(url="/admin/dashboard#users-section", status_code=303)
@@ -412,6 +554,27 @@ async def admin_delete_user(request: Request, user_id: int, db: Session = Depend
         db.delete(target_user)
         db.commit()
     return RedirectResponse(url="/admin/dashboard#users-section", status_code=303)
+
+@app.post("/admin/categories/add")
+async def admin_add_category(request: Request, name: str = Form(...), db: Session = Depends(get_db)):
+    require_role(request, "admin")
+    existing = db.query(TeamCategory).filter(TeamCategory.name == name).first()
+    if not existing:
+        new_cat = TeamCategory(name=name)
+        db.add(new_cat)
+        db.commit()
+    return RedirectResponse(url="/admin/dashboard#categories-section", status_code=303)
+
+@app.post("/admin/categories/{cat_id}/delete")
+async def admin_delete_category(request: Request, cat_id: int, db: Session = Depends(get_db)):
+    require_role(request, "admin")
+    cat = db.query(TeamCategory).filter(TeamCategory.id == cat_id).first()
+    if cat:
+        # Before deleting, nullify references in users
+        db.query(User).filter(User.team_category_id == cat_id).update({User.team_category_id: None})
+        db.delete(cat)
+        db.commit()
+    return RedirectResponse(url="/admin/dashboard#categories-section", status_code=303)
 
 # ─── Cron: Weather Monitor (replaces background worker) ─────────────────────
 # Called by cron-job.org or Vercel Cron every hour
@@ -481,7 +644,12 @@ async def cron_weather_check(request: Request):
                         
                         t_templates = db.query(TaskTemplate).filter(TaskTemplate.status_level == event_level).all()
                         for t_temp in t_templates:
-                            t_task = EmergencyTask(event_id=new_e.id, template_id=t_temp.id, title=t_temp.title)
+                            t_task = EmergencyTask(
+                                event_id=new_e.id, 
+                                template_id=t_temp.id, 
+                                team_category_id=t_temp.team_category_id,
+                                title=t_temp.title
+                            )
                             db.add(t_task)
                         db.commit()
 
