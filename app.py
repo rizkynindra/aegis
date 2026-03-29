@@ -26,10 +26,11 @@ Base.metadata.create_all(bind=engine)
 # ─── Environment Variables ───────────────────────────────────────────────────
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
-# VAPID_CLAIMS = {"sub": f"mailto:{os.environ.get('VAPID_EMAIL', 'admin@aegis.corp')}"}
+VAPID_EMAIL = os.environ.get("VAPID_EMAIL", "admin@aegis.corp")
+VAPID_CLAIMS = {"sub": f"mailto:{VAPID_EMAIL}"}
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
 BMKG_API_URL = os.environ.get("BMKG_API_URL")
-CRON_SECRET = os.environ.get("CRON_SECRET") 
+CRON_SECRET = os.environ.get("CRON_SECRET")
 
 # ─── Middleware ──────────────────────────────────────────────────────────────
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
@@ -398,7 +399,7 @@ async def complete_task(
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    db_user = db.query(User).filter(User.username == user["username"]).first()
+    db_user = db.query(User).filter(User.employee_id == user["username"]).first()
     task = db.query(EmergencyTask).filter(EmergencyTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
