@@ -167,3 +167,6 @@ echo "</pre>";
 
 ## Attribution / Sumber Data
 **Perhatian!** Wajib untuk mencantumkan BMKG (Badan Meteorologi, Klimatologi, dan Geofisika) sebagai sumber data dan menampilkannya pada aplikasi atau sistem Anda.
+
+
+udah ngepush ni boss
