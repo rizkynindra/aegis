@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy.pool import NullPool
 
 # Database URL: use env var for Vercel/Neon PostgreSQL, fallback to SQLite for local dev
-DATABASE_URL = os.environ.get("DATABASE_URL", "DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./weather_app.db")
 
 # Fix for Neon/Supabase URLs that start with "postgres://" (SQLAlchemy needs "postgresql://")
 if DATABASE_URL.startswith("postgres://"):
@@ -31,14 +31,24 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+class TeamCategory(Base):
+    __tablename__ = "team_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, index=True)
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(String(100), unique=True, index=True)
     username = Column(String(100), unique=True, index=True)
     password = Column(String(200))
     role = Column(String(50))
     name = Column(String(200))
+    team_category_id = Column(Integer, ForeignKey("team_categories.id"), nullable=True)
+
+    team_category = relationship("TeamCategory")
 
 class NotificationSetting(Base):
     __tablename__ = "notification_settings"
@@ -79,9 +89,12 @@ class TaskTemplate(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     status_level = Column(String(50), index=True)
+    team_category_id = Column(Integer, ForeignKey("team_categories.id"), nullable=True) # NEW
     title = Column(String(200))
     description = Column(String(500), nullable=True)
     requires_photo = Column(Boolean, default=True)
+
+    team_category = relationship("TeamCategory")
 
 class EmergencyEvent(Base):
     __tablename__ = "emergency_events"
@@ -100,15 +113,23 @@ class EmergencyTask(Base):
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, ForeignKey("emergency_events.id"))
     template_id = Column(Integer, ForeignKey("task_templates.id"))
+    team_category_id = Column(Integer, ForeignKey("team_categories.id"), nullable=True) # NEW
     title = Column(String(200))
     
     is_completed = Column(Boolean, default=False)
-    photo_path = Column(Text, nullable=True)  # Text for large base64 strings
+    photo_path = Column(Text, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     completed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
+    # Reporting fields (Merged from IncidentReport)
+    report_content = Column(Text, nullable=True)
+    actions_taken = Column(Text, nullable=True)
+    planned_actions = Column(Text, nullable=True)
+    monitoring_notes = Column(Text, nullable=True)
+
     event = relationship("EmergencyEvent", back_populates="tasks")
     user = relationship("User") 
+    team_category = relationship("TeamCategory")
 
 def get_db():
     db = SessionLocal()
