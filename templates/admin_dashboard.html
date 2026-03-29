@@ -183,7 +183,8 @@
                 </div>
                 <div class="card-body">
                     <form action="/admin/categories/add" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
-                        <input type="text" name="name" class="form-input" placeholder="Nama Kategori Baru (misal: Tim Evakuasi)" required style="flex: 1;">
+                        <input type="text" name="name" class="form-input"
+                            placeholder="Nama Kategori Baru (misal: Tim Evakuasi)" required style="flex: 1;">
                         <button type="submit" class="btn btn-primary">+ Tambah Kategori</button>
                     </form>
                 </div>
@@ -201,7 +202,9 @@
                             <td style="color: var(--text-muted);">#{{ cat.id }}</td>
                             <td style="font-weight: 500; color: var(--text-primary);">{{ cat.name }}</td>
                             <td style="text-align: right;">
-                                <form action="/admin/categories/{{ cat.id }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Hapus kategori {{ cat.name }}? Semua user dalam kategori ini akan di-reset kategorinya.');">
+                                <form action="/admin/categories/{{ cat.id }}/delete" method="POST"
+                                    style="display:inline;"
+                                    onsubmit="return confirm('Hapus kategori {{ cat.name }}? Semua user dalam kategori ini akan di-reset kategorinya.');">
                                     <button type="submit" class="btn btn-danger">Hapus</button>
                                 </form>
                             </td>
@@ -224,15 +227,20 @@
                 <div class="card-header">
                     <div>
                         <div class="card-title">Manajemen Pengguna</div>
-                        <div class="card-subtitle">Tambah, ubah role, atau hapus pengguna dalam sistem menggunakan Employee ID.</div>
+                        <div class="card-subtitle">Tambah, ubah role, atau hapus pengguna dalam sistem menggunakan
+                            Employee ID.</div>
                     </div>
                 </div>
                 <div class="card-body">
                     <form action="/admin/users/add" method="POST" class="form-row" style="margin-bottom: 1.25rem;">
-                        <input type="text" name="employee_id" class="form-input" placeholder="Employee ID (Login)" required style="flex: 1;">
-                        <input type="text" name="name" class="form-input" placeholder="Nama Lengkap" required style="flex: 1;">
-                        <input type="password" name="password" class="form-input" placeholder="Password" required style="flex: 1;">
-                        <select name="role" id="role-select" class="form-select" required onchange="toggleCategorySelect(this.value)">
+                        <input type="text" name="employee_id" class="form-input" placeholder="Employee ID (Login)"
+                            required style="flex: 1;">
+                        <input type="text" name="name" class="form-input" placeholder="Nama Lengkap" required
+                            style="flex: 1;">
+                        <input type="password" name="password" class="form-input" placeholder="Password" required
+                            style="flex: 1;">
+                        <select name="role" id="role-select" class="form-select" required
+                            onchange="toggleCategorySelect(this.value)">
                             <option value="normal">Normal User</option>
                             <option value="disaster">Tim Siaga (KTD)</option>
                             <option value="admin">Admin</option>
@@ -268,7 +276,8 @@
                                     {% elif u.role == 'disaster' %}
                                     <span class="badge badge-disaster">Tim Siaga</span>
                                     {% if u.team_category %}
-                                    <span style="font-size: 0.7rem; color: var(--purple); font-weight: 500;">📌 {{ u.team_category.name }}</span>
+                                    <span style="font-size: 0.7rem; color: var(--purple); font-weight: 500;">📌 {{
+                                        u.team_category.name }}</span>
                                     {% endif %}
                                     {% else %}
                                     <span class="badge badge-normal">Normal</span>
@@ -375,9 +384,10 @@
                                     {% endif %}
                                 </div>
                                 <div class="photo-info">
-                                    <span>👤</span> {{ task.user.name if task.user else 'N/A' }} 
+                                    <span>👤</span> {{ task.user.name if task.user else 'N/A' }}
                                     {% if task.team_category %}
-                                    <br><span style="margin-left:1.2rem; font-size:0.7rem; color:var(--purple);">🏷️ {{ task.team_category.name }}</span>
+                                    <br><span style="margin-left:1.2rem; font-size:0.7rem; color:var(--purple);">🏷️ {{
+                                        task.team_category.name }}</span>
                                     {% endif %}
                                 </div>
                                 <div class="photo-info">

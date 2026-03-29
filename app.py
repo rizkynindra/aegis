@@ -36,8 +36,9 @@ CRON_SECRET = os.environ.get("CRON_SECRET")
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 # ─── Templates & Static ─────────────────────────────────────────────────────
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 def get_current_user_from_session(request: Request):
