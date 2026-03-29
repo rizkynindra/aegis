@@ -26,9 +26,9 @@ Base.metadata.create_all(bind=engine)
 # ─── Environment Variables ───────────────────────────────────────────────────
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY")
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY")
-VAPID_CLAIMS = {"sub": f"mailto:{os.environ.get('VAPID_EMAIL', 'admin@aegis.corp')}"}
-SESSION_SECRET = os.environ.get("SESSION_SECRET", "super-secret-aegis-key")
-BMKG_API_URL = os.environ.get("BMKG_API_URL", "https://data.bmkg.go.id/DataMKG/MEWS/DigitalForecast/DigitalForecast-Bali.xml")
+# VAPID_CLAIMS = {"sub": f"mailto:{os.environ.get('VAPID_EMAIL', 'admin@aegis.corp')}"}
+SESSION_SECRET = os.environ.get("SESSION_SECRET")
+BMKG_API_URL = os.environ.get("BMKG_API_URL")
 CRON_SECRET = os.environ.get("CRON_SECRET") 
 
 # ─── Middleware ──────────────────────────────────────────────────────────────
