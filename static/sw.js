@@ -55,16 +55,26 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-    const data = event.data ? event.data.json() : { title: 'Pemberitahuan Cuaca', body: 'Cek kondisi cuaca terbaru!' };
+    let data = { title: 'AEGIS Alert', body: 'Ada aktivitas baru di sistem.' };
+    try {
+        data = event.data ? event.data.json() : data;
+    } catch (e) {
+        data = { title: 'AEGIS Alert', body: event.data.text() };
+    }
 
     const options = {
         body: data.body,
-        icon: 'https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png',
-        badge: 'https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png',
-        vibrate: [100, 50, 100],
+        icon: '/static/icons/icon-192x192.png',
+        badge: '/static/icons/icon-72x72.png',
+        vibrate: [200, 100, 200, 100, 200],
+        tag: 'aegis-notification',
+        renotify: true,
         data: {
             url: '/'
-        }
+        },
+        actions: [
+            { action: 'open', title: 'Buka Dashboard' }
+        ]
     };
 
     event.waitUntil(

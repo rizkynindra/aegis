@@ -3,11 +3,11 @@ async function fetchWeather() {
         const res = await fetch('/api/weather');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        
+
         const container = document.getElementById('weather-forecast');
         const days = data.data[0].cuaca;
         let html = '';
-        
+
         days.forEach((dayForecast, dayIdx) => {
             html += `
                 <div class="wx-card" style="background:var(--accent-glow); border-color:var(--accent);">
@@ -34,23 +34,42 @@ async function fetchWeather() {
 
 async function fetchActivityFeed() {
     try {
-        const res = await fetch('/api/incidents/recent');
-        const data = await res.json();
+        // Fetch both team incidents and ad-hoc reports
+        const [teamRes, adhocRes] = await Promise.all([
+            fetch('/api/incidents/recent'),
+            fetch('/api/reports/adhoc/recent')
+        ]);
+
+        const teamData = await teamRes.json();
+        const adhocData = await adhocRes.json();
+
+        // Merge and tag them
+        const allItems = [
+            ...teamData.map(i => ({ ...i, type: 'team' })),
+            ...adhocData.map(i => ({ ...i, type: 'adhoc' }))
+        ];
+
+        // Sort by timestamp descending
+        allItems.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
         const container = document.getElementById('activity-feed');
-        
-        if (data.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Belum ada aktivitas tim yang dilaporkan bulan ini.</div>';
+        if (allItems.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Belum ada aktivitas yang dilaporkan bulan ini.</div>';
             return;
         }
 
-        container.innerHTML = data.map(item => `
+        container.innerHTML = allItems.map(item => `
             <div class="feed-item">
+                <div class="feed-badge ${item.type === 'team' ? 'badge-team' : 'badge-adhoc'}">
+                    ${item.type === 'team' ? '🛡️ Tim KTD' : '👤 Laporan Karyawan'}
+                </div>
                 <div class="feed-meta">
                     <span>🕒 ${item.timestamp}</span>
                     <span>👤 ${item.author}</span>
                 </div>
-                <div class="feed-title">${item.title}</div>
+                <div class="feed-title">${item.type === 'adhoc' ? item.category : item.title}</div>
                 <div class="feed-body">${item.content}</div>
+                ${item.photo_path ? `<img src="${item.photo_path}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid var(--border);">` : ''}
             </div>
         `).join('');
     } catch (err) { console.error(err); }
@@ -62,13 +81,56 @@ async function checkStatus() {
         const data = await res.json();
         const badge = document.getElementById('status-badge');
         if (data.event_id) {
-            badge.innerText = 'WASPADAI ' + data.status_level.toUpperCase();
+            // badge.innerText = 'WASPADA ' + data.status_level.toUpperCase();
+            badge.innerText = 'WASPADA';
             badge.className = 'status-badge status-waspada';
         } else {
             badge.innerText = 'AMAN';
             badge.className = 'status-badge status-normal';
         }
-    } catch (err) {}
+    } catch (err) { }
+}
+
+// Modal Logic
+function initModal() {
+    const modal = document.getElementById('reportModal');
+    const openBtn = document.getElementById('openReportModal');
+    const closeBtn = document.getElementById('closeReportModal');
+    const form = document.getElementById('reportForm');
+
+    openBtn.onclick = () => modal.classList.add('active');
+    closeBtn.onclick = () => modal.classList.remove('active');
+    window.onclick = (e) => { if (e.target == modal) modal.classList.remove('active'); };
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Mengirim...';
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch('/api/reports/adhoc', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                alert('Laporan berhasil dikirim!');
+                form.reset();
+                modal.classList.remove('active');
+                fetchActivityFeed();
+            } else {
+                alert('Gagal mengirim laporan: ' + data.message);
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan sistem.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Kirim Laporan';
+        }
+    };
 }
 
 // PWA update logic
@@ -83,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchWeather();
     fetchActivityFeed();
     checkStatus();
+    initModal();
     setInterval(checkStatus, 30000);
     setInterval(fetchActivityFeed, 60000);
 });

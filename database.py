@@ -131,6 +131,21 @@ class EmergencyTask(Base):
     user = relationship("User") 
     team_category = relationship("TeamCategory")
 
+class AdHocReport(Base):
+    __tablename__ = "adhoc_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    category = Column(String(100), index=True)
+    content = Column(Text)
+    actions_taken = Column(Text, nullable=True)
+    planned_actions = Column(Text, nullable=True)
+    monitoring_notes = Column(Text, nullable=True)
+    photo_path = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
 def get_db():
     db = SessionLocal()
     try:

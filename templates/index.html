@@ -23,8 +23,11 @@
         </div>
 
         <nav class="nav-menu">
-            <a href="#" class="nav-item active">
+            <a href="/" class="nav-item active">
                 <span>🏠</span> <span>Beranda</span>
+            </a>
+            <a href="/evaluation" class="nav-item">
+                <span>📜</span> <span>Raport Saya</span>
             </a>
             <a href="javascript:void(0)" onclick="location.reload()" class="nav-item">
                 <span>🔄</span> <span>Perbarui Data</span>
@@ -59,18 +62,79 @@
 
         <section class="activity-side">
             <div class="section-header">
-                <h2 class="section-title">Aktivitas Tim KTD</h2>
+                <h2 class="section-title">Aktivitas Terbaru</h2>
             </div>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
-                Pantauan tindakan pencegahan & penanganan 30 hari terakhir.
+                Pantauan tindakan pencegahan & laporan karyawan 30 hari terakhir.
             </p>
 
             <div class="feed-container" id="activity-feed">
-                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat aktivitas tim...</div>
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat aktivitas...</div>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); border: 1px dashed var(--border); text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Lihat semua laporan kejadian terbaru (1 Bulan)</div>
+                <button class="btn-submit" style="margin-top: 0; padding: 0.6rem;" onclick="toggleReportsList()">Buka Arsip Laporan</button>
             </div>
         </section>
     </div>
 
+    <!-- Floating Action Button -->
+    <div class="fab-report" id="openReportModal" title="Lapor Kejadian">
+        <span>➕</span> <span style="font-size: 0.9rem; font-weight: 700; margin-left: 8px;">TAMBAH LAPORAN</span>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Laporkan Kejadian</h3>
+                <div class="modal-close" id="closeReportModal">✕</div>
+            </div>
+            <form id="reportForm">
+                <div class="form-group">
+                    <label class="form-label">Kategori</label>
+                    <select class="form-select" name="category" required>
+                        <option value="" disabled selected>Pilih Kategori</option>
+                        <option value="Huru-Hara">Huru-Hara</option>
+                        <option value="Pemogokan">Pemogokan</option>
+                        <option value="Penyanderaan">Penyanderaan</option>
+                        <option value="Ancaman">Ancaman</option>
+                        <option value="Kebakaran">Kebakaran</option>
+                        <option value="Kebocoran Kimia">Kebocoran Kimia</option>
+                        <option value="Ledakan">Ledakan</option>
+                        <option value="Banjir">Banjir</option>
+                        <option value="Gempa Bumi">Gempa Bumi</option>
+                        <option value="Evakuasi">Evakuasi</option>
+                        <option value="Pasca Kejadian">Pasca Kejadian</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Isi Laporan</label>
+                    <textarea class="form-textarea" name="content" placeholder="Deskripsikan kejadian secara detail..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Penanganan yang telah dilakukan</label>
+                    <textarea class="form-textarea" name="actions_taken" placeholder="Apa yang sudah dilakukan di lokasi?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tindakan Perbaikan yang akan dilakukan</label>
+                    <textarea class="form-textarea" name="planned_actions" placeholder="Rencana tindak lanjut selanjutnya..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pemantauan Tindakan Perbaikan</label>
+                    <textarea class="form-textarea" name="monitoring_notes" placeholder="Catatan pemantauan tambahan..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Foto Bukti (Opsional)</label>
+                    <input type="file" class="form-input" name="photo" accept="image/*">
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn">Kirim Laporan</button>
+            </form>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', path='js/index.js') }}"></script>
+    <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
 </body>
 </html>

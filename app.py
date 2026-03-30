@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import engine, Base, get_db, SessionLocal
-from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask
+from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask, AdHocReport
 
 app = FastAPI()
 
@@ -152,6 +152,12 @@ async def read_item(request: Request):
         return RedirectResponse(url="/disaster/dashboard", status_code=303)
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
+@app.get("/evaluation", response_class=HTMLResponse)
+async def evaluation_report(request: Request, db: Session = Depends(get_db)):
+    user_session = require_role(request, "normal")
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    return templates.TemplateResponse("evaluation.html", {"request": request, "user": user})
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -210,10 +216,8 @@ async def subscribe(request: Request, db: Session = Depends(get_db)):
             
     return {"status": "success"}
 
-@app.post("/api/notify-all")
-async def notify_all(title: str = Form(...), message: str = Form(...), db: Session = Depends(get_db)):
+def send_broadcast_notification(db: Session, title: str, message: str):
     subs = db.query(PushSubscription).all()
-    results = []
     sent = 0
     for sub in subs:
         try:
@@ -224,13 +228,16 @@ async def notify_all(title: str = Form(...), message: str = Form(...), db: Sessi
                 vapid_claims=VAPID_CLAIMS
             )
             sent += 1
-            results.append("success")
         except WebPushException as ex:
-            results.append(f"failed: {ex}")
             if ex.response and ex.response.status_code == 410:
                 db.delete(sub)
                 db.commit()
-    return {"sent": sent, "results": results}
+    return sent
+
+@app.post("/api/notify-all")
+async def notify_all_endpoint(title: str = Form(...), message: str = Form(...), db: Session = Depends(get_db)):
+    sent = send_broadcast_notification(db, title, message)
+    return {"sent": sent}
 
 @app.get("/manifest.json")
 async def manifest():
@@ -345,6 +352,8 @@ async def report_task_completion(
         task.photo_path = f"data:image/jpeg;base64,{base64.b64encode(contents).decode()}"
     
     db.commit()
+    # Notify everyone
+    send_broadcast_notification(db, f"SOP {task.title}", f"Laporan penyelesaian tugas dari {user.name}")
     return {"status": "success", "message": "Zadatak i izvješće su uspješno spremljeni"}
 
 @app.get("/api/incidents/recent")
@@ -366,6 +375,61 @@ async def get_recent_incidents(db: Session = Depends(get_db)):
         "planned_actions": t.planned_actions,
         "monitoring_notes": t.monitoring_notes
     } for t in tasks]
+
+@app.post("/api/reports/adhoc")
+async def create_adhoc_report(
+    request: Request,
+    category: str = Form(...),
+    content: str = Form(...),
+    actions_taken: str = Form(""),
+    planned_actions: str = Form(""),
+    monitoring_notes: str = Form(""),
+    photo: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    
+    new_report = AdHocReport(
+        user_id=user.id,
+        category=category,
+        content=content,
+        actions_taken=actions_taken,
+        planned_actions=planned_actions,
+        monitoring_notes=monitoring_notes
+    )
+
+    if photo:
+        contents = await photo.read()
+        new_report.photo_path = f"data:image/jpeg;base64,{base64.b64encode(contents).decode()}"
+    
+    db.add(new_report)
+    db.commit()
+    # Notify everyone
+    send_broadcast_notification(db, f"Laporan {category}", f"Kejadian baru dilaporkan oleh {user.name}")
+    return {"status": "success", "message": "Laporan berhasil dikirim"}
+
+@app.get("/api/reports/adhoc/recent")
+async def get_recent_adhoc_reports(db: Session = Depends(get_db)):
+    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    reports = db.query(AdHocReport).filter(
+        AdHocReport.timestamp >= one_month_ago
+    ).order_by(AdHocReport.timestamp.desc()).all()
+    
+    return [{
+        "id": r.id,
+        "category": r.category,
+        "content": r.content,
+        "author": r.user.name if r.user else "N/A",
+        "timestamp": r.timestamp.strftime("%d %b %Y, %H:%M"),
+        "actions_taken": r.actions_taken,
+        "planned_actions": r.planned_actions,
+        "monitoring_notes": r.monitoring_notes,
+        "photo_path": r.photo_path
+    } for r in reports]
 
 @app.post("/api/tasks/{task_id}/upload")
 async def upload_task_photo(
