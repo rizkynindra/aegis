@@ -2,6 +2,25 @@
     "name": "AEGIS",
     "short_name": "AEGIS",
     "description": "Aplikasi prakiraan cuaca premium menggunakan data dari BMKG Indonesia.",
+    "id": "/",
+    "categories": [
+        "weather",
+        "lifestyle"
+    ],
+    "screenshots": [
+        {
+            "src": "https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
+            "sizes": "1920x1080",
+            "type": "image/png",
+            "form_factor": "wide"
+        },
+        {
+            "src": "https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",

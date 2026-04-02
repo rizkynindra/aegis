@@ -75,8 +75,38 @@ async function fetchActivityFeed() {
     } catch (err) { console.error(err); }
 }
 
+let lastStatus = 'normal';
+
+function showStatusNotification(level) {
+    // Remove if exists
+    const existing = document.getElementById('status-notif-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'status-notif-toast';
+    toast.className = 'status-notification';
+    toast.innerHTML = `
+        <div class="notif-icon">⚠️</div>
+        <div class="notif-content">
+            <div class="notif-title">PERINGATAN STATUS: ${level.toUpperCase()}</div>
+            <div class="notif-text">Kondisi cuaca terpantau ekstrem. Mohon tetap waspada dan ikuti panduan kesiapsiagaan di bawah.</div>
+        </div>
+        <div class="notif-close" onclick="this.parentElement.classList.remove('active')">✕</div>
+    `;
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('active'), 100);
+    
+    // Auto hide after 10s
+    setTimeout(() => {
+        if (toast) toast.classList.remove('active');
+    }, 10000);
+}
+
 async function checkStatus() {
     try {
+
         const res = await fetch('/api/events/active/tasks');
         const data = await res.json();
         const badge = document.getElementById('status-badge');
@@ -84,12 +114,19 @@ async function checkStatus() {
             // badge.innerText = 'WASPADA ' + data.status_level.toUpperCase();
             badge.innerText = 'WASPADA';
             badge.className = 'status-badge status-waspada';
+            
+            if (lastStatus === 'normal') {
+                showStatusNotification(data.status_level || 'waspada');
+            }
+            lastStatus = 'waspada';
         } else {
             badge.innerText = 'AMAN';
             badge.className = 'status-badge status-normal';
+            lastStatus = 'normal';
         }
     } catch (err) { }
 }
+
 
 // Modal Logic
 function initModal() {

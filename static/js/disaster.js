@@ -38,9 +38,32 @@ async function fetchWeather() {
     } catch (err) { console.error(err); }
 }
 
+let lastStatus = 'normal';
+
+function showStatusNotification(level) {
+    const existing = document.getElementById('status-notif-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'status-notif-toast';
+    toast.className = 'status-notification';
+    toast.innerHTML = `
+        <div class="notif-icon">🔔</div>
+        <div class="notif-content">
+            <div class="notif-title">PANGGILAN TUGAS: ${level.toUpperCase()}</div>
+            <div class="notif-text">Status berubah menjadi waspada! Ada instruksi SOP baru yang harus segera dilaksanakan.</div>
+        </div>
+        <div class="notif-close" onclick="this.parentElement.classList.remove('active')">✕</div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('active'), 100);
+    setTimeout(() => { if (toast) toast.classList.remove('active'); }, 10000);
+}
+
 // Tasks Fetching
 async function fetchTasks() {
     try {
+
         const res = await fetch('/api/events/active/tasks');
         const data = await res.json();
         currentTasks = data.tasks || [];
@@ -51,11 +74,19 @@ async function fetchTasks() {
             container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-muted);">✨ Semua aman. Tidak ada penugasan aktif.</div>`;
             badge.className = 'status-badge status-normal';
             badge.innerText = 'AMAN';
+            lastStatus = 'normal';
             return;
         }
 
-        badge.innerText = 'STATUS ' + data.status_level.toUpperCase();
+        const currentLevel = data.status_level || 'waspada';
+        badge.innerText = 'STATUS ' + currentLevel.toUpperCase();
         badge.className = 'status-badge status-waspada';
+
+        if (lastStatus === 'normal') {
+            showStatusNotification(currentLevel);
+        }
+        lastStatus = 'waspada';
+
         
         let html = '';
         currentTasks.forEach((task) => {
