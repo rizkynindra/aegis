@@ -94,10 +94,10 @@ function showStatusNotification(level) {
         <div class="notif-close" onclick="this.parentElement.classList.remove('active')">✕</div>
     `;
     document.body.appendChild(toast);
-    
+
     // Trigger animation
     setTimeout(() => toast.classList.add('active'), 100);
-    
+
     // Auto hide after 10s
     setTimeout(() => {
         if (toast) toast.classList.remove('active');
@@ -114,7 +114,7 @@ async function checkStatus() {
             // badge.innerText = 'WASPADA ' + data.status_level.toUpperCase();
             badge.innerText = 'WASPADA';
             badge.className = 'status-badge status-waspada';
-            
+
             if (lastStatus === 'normal') {
                 showStatusNotification(data.status_level || 'waspada');
             }
