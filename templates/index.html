@@ -13,6 +13,15 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
 </head>
 <body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
+        <div class="user-badge">{{ user.name[0] }}</div>
+    </header>
+
     <aside class="sidebar">
         <div class="brand">
             <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
@@ -82,8 +91,31 @@
         </section>
     </div>
 
-    <!-- Floating Action Button -->
-    <div class="fab-report" id="openReportModal" title="Lapor Kejadian">
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Beranda</span>
+        </a>
+        <a href="/evaluation" class="nav-item">
+            <span class="nav-icon">📜</span>
+            <span class="nav-label">Raport</span>
+        </a>
+        <div class="nav-item fab-placeholder" onclick="document.getElementById('openReportModal').click()">
+            <div class="nav-fab">➕</div>
+        </div>
+        <a href="javascript:void(0)" onclick="location.reload()" class="nav-item">
+            <span class="nav-icon">🔄</span>
+            <span class="nav-label">Refresh</span>
+        </a>
+        <a href="/logout" class="nav-item">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Keluar</span>
+        </a>
+    </nav>
+
+    <!-- Floating Action Button (Handled by JS to trigger modal) -->
+    <div class="fab-report" id="openReportModal" title="Lapor Kejadian" style="display: none;">
         <span>➕</span> <span style="font-size: 0.9rem; font-weight: 700; margin-left: 8px;">TAMBAH LAPORAN</span>
     </div>
 
@@ -136,6 +168,11 @@
             </form>
         </div>
     </div>
+
+    <script src="{{ url_for('static', path='js/index.js') }}"></script>
+    <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
+</body>
+</html>
 
     <script src="{{ url_for('static', path='js/index.js') }}"></script>
     <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
