@@ -131,6 +131,44 @@ class EmergencyTask(Base):
     user = relationship("User") 
     team_category = relationship("TeamCategory")
 
+class AdHocReport(Base):
+    __tablename__ = "adhoc_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    category = Column(String(100), index=True)
+    content = Column(Text)
+    actions_taken = Column(Text, nullable=True)
+    planned_actions = Column(Text, nullable=True)
+    monitoring_notes = Column(Text, nullable=True)
+    photo_path = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+class PreventiveTask(Base):
+    __tablename__ = "preventive_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    team_category_id = Column(Integer, ForeignKey("team_categories.id"))
+    title = Column(String(200))
+    description = Column(String(500), nullable=True)
+
+    team_category = relationship("TeamCategory")
+
+class PreventiveReport(Base):
+    __tablename__ = "preventive_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("preventive_tasks.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    photo_path = Column(Text, nullable=True) # Evidence-based: Required
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    is_completed = Column(Boolean, default=True)
+
+    task = relationship("PreventiveTask")
+    user = relationship("User")
+
 def get_db():
     db = SessionLocal()
     try:

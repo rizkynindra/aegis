@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Evaluation Report - AEGIS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/evaluation.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
+        <nav class="nav-menu">
+            <a href="/" class="nav-item">
+                <span>🏠</span> <span>Beranda</span>
+            </a>
+            <a href="/evaluation" class="nav-item active">
+                <span>📜</span> <span>Raport Saya</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-name">{{ user.name }}</div>
+                <div class="user-role">ID: {{ user.employee_id }}</div>
+            </div>
+            <a href="/logout" style="display:block; margin-top: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.8rem;">🚪 Keluar</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="report-header">
+            <div class="report-subtitle">Monthly Employee Readiness Report</div>
+            <h1 class="report-title">Raport Evaluasi KTD</h1>
+        </header>
+
+        <div class="grid-container">
+            <div class="left-col">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Kesiapan Tanggap Darurat</h3>
+                    <div class="grid-2">
+                        <div class="score-item">
+                            <div class="score-label">Penanggulangan Kebakaran</div>
+                            <div class="score-value">85 / 100</div>
+                            <div class="score-bar"><div class="score-fill" style="width: 85%; background: var(--accent);"></div></div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">Tanggap Banjir</div>
+                            <div class="score-value">92 / 100</div>
+                            <div class="score-bar"><div class="score-fill" style="width: 92%; background: var(--green);"></div></div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">P3K & Penyelamatan</div>
+                            <div class="score-value">78 / 100</div>
+                            <div class="score-bar"><div class="score-fill" style="width: 78%; background: var(--blue);"></div></div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">Prosedur Evakuasi</div>
+                            <div class="score-value">95 / 100</div>
+                            <div class="score-bar"><div class="score-fill" style="width: 95%; background: var(--green);"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Riwayat Pelatihan</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-date">25 MAR 2026</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Pelatihan APAR & Hydrant</div>
+                                <div class="timeline-desc">Simulasi pemadaman api skala kecil dan penggunaan hydrant gedung.</div>
+                                <span class="badge badge-success">COMPLETED</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">12 FEB 2026</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Simulasi Evakuasi Gempa</div>
+                                <div class="timeline-desc">Latihan jalur evakuasi dan pengamanan dokumen penting.</div>
+                                <span class="badge badge-success">COMPLETED</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">10 JAN 2026</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">First Aid Training</div>
+                                <div class="timeline-desc">Dasar-dasar pertolongan pertama pada kecelakaan kerja.</div>
+                                <span class="badge badge-success">COMPLETED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="card grade-box">
+                    <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;">PREDIKAT AKHIR</div>
+                    <div class="grade-letter">A</div>
+                    <div class="grade-status">SIAGA PENUH</div>
+                </div>
+
+                <div class="card">
+                    <h3>Catatan Instruktur</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-top: 1rem;">
+                        "Saudara menunjukkan respons yang sangat cepat saat simulasi evakuasi. Perlu peningkatan pada penguasaan teknik balut bidai dalam sesi P3K. Pertahankan kedisiplinan dalam memantau pemicu cuaca."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
