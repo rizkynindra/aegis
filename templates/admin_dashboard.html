@@ -18,6 +18,18 @@
     </div>
 
     <div class="layout">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="sidebar-brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <div class="brand-text">
+                <h2>AEGIS</h2>
+            </div>
+        </div>
+        <div class="user-avatar">{{ user.name[0] }}</div>
+    </header>
+
+    <div class="layout">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-brand">
@@ -59,6 +71,30 @@
                 </div>
             </div>
         </aside>
+
+        <!-- Bottom Navigation (Mobile Only) -->
+        <nav class="bottom-nav">
+            <a href="/admin/dashboard" class="nav-item active">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#users-section" class="nav-item">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Users</span>
+            </a>
+            <a href="#categories-section" class="nav-item">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-label">Teams</span>
+            </a>
+            <a href="#logs-section" class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Logs</span>
+            </a>
+            <a href="/logout" class="nav-item">
+                <span class="nav-icon">🚪</span>
+                <span class="nav-label">Logout</span>
+            </a>
+        </nav>
 
         <!-- Main -->
         <main class="main-content">

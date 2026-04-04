@@ -9,11 +9,24 @@
     --text-primary: #ffffff;
     --text-secondary: #e2e8f0;
     --text-muted: #94a3b8;
-    --green: #10b981;
-    --yellow: #f59e0b;
-    --radius-lg: 16px;
     --radius-md: 12px;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--sidebar-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
 }
 
 * {
@@ -29,6 +42,114 @@ body {
     height: 100vh;
     overflow: hidden;
     display: flex;
+    padding-top: 0;
+}
+
+/* --- Mobile Header --- */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: var(--sidebar-bg);
+    padding: 0 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-badge {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
+/* --- Bottom Nav --- */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    padding: 0 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.bottom-nav .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0.5rem 0;
+    margin-bottom: 0;
+    border-radius: 12px;
+    background: transparent;
+}
+
+.bottom-nav .nav-icon {
+    font-size: 1.25rem;
+}
+
+.bottom-nav .nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+.bottom-nav .nav-item.active {
+    background: transparent;
+    color: var(--accent);
+}
+
+/* FAB for Bottom Nav */
+.fab-placeholder {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+}
+
+.nav-fab {
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, #ff4d4d, #e74c3c);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    transform: translateY(-22px);
+    border: 4px solid var(--bg); /* Match main bg to pop out */
+}
+
+/* Ensure all interactive elements have visible text */
+input, select, textarea, button {
+    color: inherit;
+}
+
+select option {
+    background: var(--card-bg);
+    color: white;
 }
 
 /* --- Sidebar --- */
@@ -306,7 +427,7 @@ body {
     }
 
     .brand span,
-    .nav-item span,
+    .sidebar .nav-item span,
     .user-profile div {
         display: none;
     }
@@ -321,30 +442,47 @@ body {
         flex-direction: column;
         overflow-y: auto;
         height: auto;
+        padding-top: 60px; /* Header space */
+        padding-bottom: 80px; /* Bottom Nav space */
     }
 
     .sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        justify-content: space-between;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
+        display: none;
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .bottom-nav {
+        display: flex;
     }
 
     .main-wrapper {
         flex-direction: column;
         overflow: visible;
+        margin: 1rem;
+        gap: 1rem;
     }
 
     .dashboard-hub {
         overflow: visible;
         border-right: none;
+        padding: 1.5rem;
     }
 
     .activity-side {
         width: 100%;
         border-top: 1px solid var(--border);
+        padding: 1.5rem;
+    }
+
+    .wx-card {
+        min-width: 160px; /* Larger for touch */
+    }
+
+    .fab-report {
+        display: none !important; /* Managed by bottom nav fab */
     }
 }
 

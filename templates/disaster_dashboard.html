@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/disaster.css') }}">
 </head>
 <body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
+        <div class="user-badge">{{ user.name[0] }}</div>
+    </header>
+
     <aside class="sidebar">
         <div class="brand">
             <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
@@ -111,6 +120,27 @@
             </div>
         </section>
     </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <a href="/disaster/dashboard" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="/disaster/preventive" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Checklist</span>
+        </a>
+        <a href="javascript:void(0)" onclick="openHistory()" class="nav-item">
+            <span class="nav-icon">🕒</span>
+            <span class="nav-label">Riwayat</span>
+        </a>
+        <a href="/logout" class="nav-item">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Keluar</span>
+        </a>
+    </nav>
+
 
     <!-- History Modal -->
     <div id="historyModal" class="modal">
