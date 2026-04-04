@@ -154,15 +154,15 @@ function initModal() {
             const data = await res.json();
 
             if (data.status === 'success') {
-                alert('Laporan berhasil dikirim!');
+                showStatusNotification('Sukses: Laporan Terkirim');
                 form.reset();
                 modal.classList.remove('active');
                 fetchActivityFeed();
             } else {
-                alert('Gagal mengirim laporan: ' + data.message);
+                showStatusNotification('Gagal: ' + data.message);
             }
         } catch (err) {
-            alert('Terjadi kesalahan sistem.');
+            showStatusNotification('Gagal: Terjadi kesalahan sistem');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = 'Kirim Laporan';

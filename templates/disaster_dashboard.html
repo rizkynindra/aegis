@@ -11,7 +11,10 @@
 </head>
 <body>
     <aside class="sidebar">
-        <div class="brand">🛡️ <span>AEGIS</span></div>
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
         
         <div class="user-profile">
             <div class="user-name">{{ user.name }}</div>
@@ -20,11 +23,14 @@
         </div>
 
         <nav class="nav-menu">
-            <a href="#" class="nav-item active">
-                <span>🏠</span> <span>Beranda</span>
+            <a href="/disaster/dashboard" class="nav-item active">
+                <span>🏠</span> <span>SOP Darurat (Beranda)</span>
+            </a>
+            <a href="/disaster/preventive" class="nav-item">
+                <span>📋</span> <span>Preventive Checklist</span>
             </a>
             <a href="javascript:void(0)" onclick="openHistory()" class="nav-item">
-                <span>📋</span> <span>Laporan Terakhir</span>
+                <span>🕒</span> <span>Riwayat SOP</span>
             </a>
         </nav>
 

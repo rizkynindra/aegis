@@ -14,7 +14,10 @@
 </head>
 <body>
     <aside class="sidebar">
-        <div class="brand">🛡️ <span>AEGIS</span></div>
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
         
         <div class="user-profile">
             <div class="user-name">{{ user.name }}</div>

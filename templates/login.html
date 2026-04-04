@@ -13,7 +13,7 @@
 <body>
     <div class="login-wrapper">
         <div class="login-brand">
-            <div class="brand-logo">🛡️</div>
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
             <h1><span>AEGIS</span></h1>
             <p>Sistem Manajemen Peringatan Cuaca & Koordinasi Tim Siaga Bencana.</p>
             <div class="brand-features">
@@ -22,11 +22,11 @@
                     <span>Integrasi langsung BMKG API</span>
                 </div>
                 <div class="brand-feature">
-                    <div class="feature-icon">🔔</div>
+                    <div class="feature-icon">⚠️</div>
                     <span>Notifikasi otomatis 3 hari berturut</span>
                 </div>
                 <div class="brand-feature">
-                    <div class="feature-icon">📋</div>
+                    <div class="feature-icon">📝</div>
                     <span>Checklist SOP Tim Siaga</span>
                 </div>
             </div>

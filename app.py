@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import engine, Base, get_db, SessionLocal
-from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask, AdHocReport
+from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask, AdHocReport, PreventiveTask, PreventiveReport
 
 app = FastAPI()
 
@@ -55,88 +55,113 @@ def require_role(request: Request, role: str):
 async def startup_event():
     db = SessionLocal()
     try:
-        # Seed categories if empty
-        if not db.query(TeamCategory).first():
-            categories = [
-                "Pimpinan Pengendali (Kacab)",
-                "Koordinator Penanggulangan & Pengamanan (Kabeng)",
-                "Koordinator Evakuasi & Penyelamatan",
-                "Tim Komunikasi",
-                "Tim Pelaksana / Fire & Floods",
-                "Tim Keamanan (Security)",
-                "Tim Listrik & Sarana",
-                "Tim P3K & P3GD",
-                "Tim Karyawan & Logistik",
-                "Tim Barang Inventaris & Dokumen",
-                "Tim Kendaraan"
+        # 1. Clear existing categories and tasks to ensure we use the correct 7 teams
+        # Only do this if we haven't seeded our specific 'Tim Fire & Floods' yet
+        if not db.query(TeamCategory).filter(TeamCategory.name == "Tim Fire & Floods").first():
+            print("Resetting Team Categories to match PREVENTIVE_CHECKLIST.md...")
+            # We don't delete everything to avoid breaking existing users/reports, 
+            # but we will ensure our 7 teams are present.
+            
+            target_teams = [
+                "Tim Fire & Floods", "Tim Pengamanan", "Tim Evakuasi", 
+                "Tim P3K", "Tim Logistik", "Tim Rehabilitasi", "Tim Security"
             ]
-            db.add_all([TeamCategory(name=cat) for cat in categories])
+            
+            for team_name in target_teams:
+                existing = db.query(TeamCategory).filter(TeamCategory.name == team_name).first()
+                if not existing:
+                    db.add(TeamCategory(name=team_name))
             db.commit()
 
-        # Seed default users & Migration
-        if not db.query(User).first():
-            default_users = [
-                User(employee_id="admin", username="admin", password="123", role="admin", name="Administrator"),
-                User(employee_id="user", username="user", password="123", role="normal", name="Normal User"),
-                User(employee_id="disaster", username="disaster", password="123", role="disaster", name="Disaster Team")
-            ]
-            db.add_all(default_users)
-            db.commit()
-        else:
-            # Migration: Ensure all users have employee_id
-            users_to_migrate = db.query(User).filter(User.employee_id == None).all()
-            if users_to_migrate:
-                for u in users_to_migrate:
-                    u.employee_id = u.username
-                db.commit()
-        
-        # Seed default setting if empty
-        if not db.query(NotificationSetting).first():
-            db.add(NotificationSetting(condition="hujan ringan", is_active=True))
-            db.commit()
-        
-        # Seed specialized tasks for each category
+        # 2. Re-map categories so we can seed tasks and users
         all_cats = db.query(TeamCategory).all()
         cat_map = {c.name: c.id for c in all_cats}
+
+        # 3. Seed Preventive Tasks (Force seed if count is 0)
+        if not db.query(PreventiveTask).count():
+            print("Seeding Preventive Tasks...")
+            checklist_data = {
+                "Tim Fire & Floods": [
+                    "Pemeriksaan APAR (tekanan & kondisi)", 
+                    "Cek hydrant & pompa air berfungsi normal", 
+                    "Pastikan jalur drainase tidak tersumbat", 
+                    "Identifikasi area rawan genangan", 
+                    "Inspeksi instalasi listrik berisiko"
+                ],
+                "Tim Pengamanan": [
+                    "Cek akses jalur evakuasi tidak terhalang", 
+                    "Pastikan signage evakuasi terlihat jelas", 
+                    "Kontrol area rawan (gudang, genset, dll)", 
+                    "Briefing kesiapsiagaan kepada karyawan", 
+                    "Simulasi pengamanan area darurat"
+                ],
+                "Tim Evakuasi": [
+                    "Verifikasi titik kumpul aman & jelas", 
+                    "Uji jalur evakuasi secara berkala", 
+                    "Sosialisasi jalur evakuasi ke karyawan", 
+                    "Pendataan jumlah karyawan aktif", 
+                    "Simulasi evakuasi minimal berkala"
+                ],
+                "Tim P3K": [
+                    "Cek kelengkapan & masa berlaku alat P3K", 
+                    "Menyediakan obat dasar & alat medis", 
+                    "Update daftar petugas P3K", 
+                    "Simulasi penanganan korban", 
+                    "Koordinasi dengan klinik/RS terdekat"
+                ],
+                "Tim Logistik": [
+                    "Cek ketersediaan alat darurat (pompa, APAR, dll)", 
+                    "Stok air minum & konsumsi darurat", 
+                    "Kesiapan alat komunikasi (HT, dll)", 
+                    "Penempatan alat mudah dijangkau", 
+                    "Update inventaris logistic"
+                ],
+                "Tim Rehabilitasi": [
+                    "Identifikasi area prioritas pemulihan", 
+                    "Kesiapan alat perbaikan", 
+                    "Backup fasilitas penting (genset, dll)", 
+                    "Rencana pemulihan operasional", 
+                    "Dokumentasi kondisi awal area"
+                ],
+                "Tim Security": [
+                    "Area patroli keamanan rutin", 
+                    "Cek CCTV & sistem alarm", 
+                    "Kontrol akses pintu masuk/keluar", 
+                    "Pengecekan kunci & gembok", 
+                    "Laporan harian keamanan"
+                ]
+            }
+
+            for team_name, tasks in checklist_data.items():
+                cat_id = cat_map.get(team_name)
+                if cat_id:
+                    for t_title in tasks:
+                        db.add(PreventiveTask(team_category_id=cat_id, title=t_title))
+            db.commit()
+
+        # 4. Seed Default Users for each Team
+        for team_name in ["Tim Fire & Floods", "Tim Pengamanan", "Tim Evakuasi", "Tim P3K", "Tim Logistik", "Tim Rehabilitasi", "Tim Security"]:
+            username = team_name.lower().replace(" ", "_").replace("&", "and")
+            existing_user = db.query(User).filter(User.username == username).first()
+            if not existing_user:
+                cat_id = cat_map.get(team_name)
+                db.add(User(
+                    employee_id=username,
+                    username=username,
+                    password="123",
+                    role="disaster",
+                    name=team_name,
+                    team_category_id=cat_id
+                ))
         
-        category_tasks = {
-            "Pimpinan Pengendali (Kacab)": "Monitoring Situasi & Pengambilan Keputusan",
-            "Koordinator Penanggulangan & Pengamanan (Kabeng)": "Koordinasi dan Pengerahan Tim",
-            "Koordinator Evakuasi & Penyelamatan": "Pengawasan Jalur Evakuasi dan Titik Kumpul",
-            "Tim Komunikasi": "Menghubungi Instansi Terkait (Damkar, Polisi, PLN, RS)",
-            "Tim Pelaksana / Fire & Floods": "Pengecekan Kesiapan APAR/Hydrant & Tanggul",
-            "Tim Keamanan (Security)": "Pengamanan Area dan Aset Kantor",
-            "Tim Listrik & Sarana": "Pemutusan Arus Listrik Utama (Panel)",
-            "Tim P3K & P3GD": "Penyiapan Posko Medis dan Alat P3K",
-            "Tim Karyawan & Logistik": "Penyiapan Bahan Makanan dan Konsumsi Darurat",
-            "Tim Barang Inventaris & Dokumen": "Penyelamatan Dokumen Penting dan Backup Data",
-            "Tim Kendaraan": "Pemindahan Kendaraan ke Area Aman"
-        }
-
-        for cat_name, task_title in category_tasks.items():
-            cat_id = cat_map.get(cat_name)
-            if not cat_id: continue
+        # Admin user
+        if not db.query(User).filter(User.username == "admin").first():
+            db.add(User(employee_id="admin", username="admin", password="123", role="admin", name="Administrator"))
             
-            # Check all levels and sync
-            for level in ["Waspada", "Siaga", "Darurat"]:
-                full_title = f"SIAGA: {task_title}" if level == "Siaga" else (f"DARURAT: {task_title}" if level == "Darurat" else task_title)
-                
-                # Deduplication check
-                exists = db.query(TaskTemplate).filter(
-                    TaskTemplate.status_level == level, 
-                    TaskTemplate.team_category_id == cat_id,
-                    TaskTemplate.title == full_title
-                ).first()
-
-                if not exists:
-                    db.add(TaskTemplate(
-                        status_level=level,
-                        team_category_id=cat_id,
-                        title=full_title,
-                        description=f"Instruksi khusus untuk {cat_name} berdasarkan SOP Job Desk.",
-                        requires_photo=True
-                    ))
         db.commit()
+    except Exception as e:
+        print(f"Error during startup seeding: {e}")
+        db.rollback()
     finally:
         db.close()
 
@@ -530,6 +555,80 @@ async def disaster_dashboard(request: Request, db: Session = Depends(get_db)):
         "user": user, 
         "event": event
     })
+
+@app.get("/disaster/preventive", response_class=HTMLResponse)
+async def preventive_dashboard(request: Request, db: Session = Depends(get_db)):
+    user_session = require_role(request, "disaster")
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    
+    # We pass the same event info just in case
+    event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).order_by(EmergencyEvent.id.desc()).first()
+    
+    return templates.TemplateResponse("preventive_dashboard.html", {
+        "request": request, 
+        "user": user, 
+        "event": event
+    })
+
+# ─── Preventive Checklist API ────────────────────────────────────────────────
+@app.get("/api/tasks/preventive")
+async def get_preventive_tasks(request: Request, db: Session = Depends(get_db)):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user = db.query(User).filter(User.username == user_session["username"]).first()
+    if not user or not user.team_category_id:
+        return {"tasks": []}
+    
+    tasks = db.query(PreventiveTask).filter(PreventiveTask.team_category_id == user.team_category_id).all()
+    
+    # Get this month's reports for these tasks
+    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    result = []
+    for t in tasks:
+        report = db.query(PreventiveReport).filter(
+            PreventiveReport.task_id == t.id,
+            PreventiveReport.timestamp >= month_start
+        ).first()
+        
+        result.append({
+            "id": t.id,
+            "title": t.title,
+            "is_completed": report is not None,
+            "photo_path": report.photo_path if report else None,
+            "completed_at": report.timestamp.strftime("%d %b %Y, %H:%M") if report else None
+        })
+    
+    return {"tasks": result}
+
+@app.post("/api/tasks/preventive/{task_id}/report")
+async def report_preventive_task(
+    request: Request,
+    task_id: int,
+    photo: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user = db.query(User).filter(User.username == user_session["username"]).first()
+    
+    # Convert photo to base64
+    contents = await photo.read()
+    base64_photo = f"data:image/jpeg;base64,{base64.b64encode(contents).decode()}"
+    
+    new_report = PreventiveReport(
+        task_id=task_id,
+        user_id=user.id,
+        photo_path=base64_photo
+    )
+    db.add(new_report)
+    db.commit()
+    
+    return {"status": "success"}
 
 @app.post("/admin/settings")
 async def add_setting(request: Request, condition: str = Form(...), db: Session = Depends(get_db)):
