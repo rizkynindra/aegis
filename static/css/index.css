@@ -282,7 +282,6 @@ select option {
     flex: 1;
     padding: 2rem;
     overflow-y: auto;
-    border-right: 1px solid var(--border);
     background: var(--card-bg);
 }
 
@@ -369,15 +368,6 @@ select option {
     color: var(--text-secondary);
 }
 
-/* --- Right Column: Activity Feed --- */
-.activity-side {
-    width: 400px;
-    background: var(--sidebar-bg);
-    padding: 2rem;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
 
 .feed-container {
     display: flex;
@@ -436,10 +426,6 @@ select option {
     .user-profile div {
         display: none;
     }
-
-    .activity-side {
-        width: 320px;
-    }
 }
 
 @media (max-width: 900px) {
@@ -459,6 +445,12 @@ select option {
         display: flex;
     }
 
+    .mobile-header .brand-logo-img {
+        display: block !important;
+        width: 40px !important;
+        height: 40px !important;
+    }
+
     .bottom-nav {
         display: flex;
     }
@@ -472,13 +464,6 @@ select option {
 
     .dashboard-hub {
         overflow: visible;
-        border-right: none;
-        padding: 1.5rem;
-    }
-
-    .activity-side {
-        width: 100%;
-        border-top: 1px solid var(--border);
         padding: 1.5rem;
     }
 
