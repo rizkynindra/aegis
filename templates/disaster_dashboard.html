@@ -41,6 +41,15 @@
             <a href="javascript:void(0)" onclick="openHistory()" class="nav-item">
                 <span>🕒</span> <span>Riwayat SOP</span>
             </a>
+            
+            {% if user.id == user.team_category.leader_id and event %}
+            <div style="margin-top: 2rem; padding: 0 1rem;">
+                <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 1px;">Leader Actions</div>
+                <button class="btn-evacuate" onclick="triggerEvacuation()">
+                    <span>🚨</span> INSTRUKSI EVAKUASI
+                </button>
+            </div>
+            {% endif %}
         </nav>
 
         <a href="/logout" class="btn-logout">
@@ -140,7 +149,13 @@
             <span class="nav-label">Keluar</span>
         </a>
     </nav>
-
+    
+    <!-- Floating Action Button for Leaders (Desktop & Mobile fallback) -->
+    {% if user.id == user.team_category.leader_id and event %}
+    <div class="fab-evacuate" onclick="triggerEvacuation()" title="Instruksi Evakuasi">
+        <span>🚨</span> <span class="fab-text">EVAKUASI SEKARANG</span>
+    </div>
+    {% endif %}
 
     <!-- History Modal -->
     <div id="historyModal" class="modal">
@@ -152,6 +167,24 @@
     </div>
 
     <script src="{{ url_for('static', path='js/disaster.js') }}"></script>
+    <script>
+        async function triggerEvacuation() {
+            if (!confirm("⚠️ PERINGATAN: Anda akan mengeluarkan instruksi EVAKUASI untuk SELURUH karyawan. Lanjutkan?")) return;
+            
+            try {
+                const res = await fetch('/api/emergency/evacuate', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert('🚨 ' + data.message);
+                    window.location.reload();
+                } else {
+                    alert('Gagal: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Kesalahan koneksi saat mengirim instruksi.');
+            }
+        }
+    </script>
     <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
 </body>
 </html>

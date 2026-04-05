@@ -50,114 +50,29 @@ def require_role(request: Request, role: str):
         raise HTTPException(status_code=403, detail="Forbidden")
     return user
 
+def send_broadcast_notification(db: Session, title: str, body: str):
+    subs = db.query(PushSubscription).all()
+    sent_count = 0
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info=sub.to_dict(),
+                data=json.dumps({"title": title, "body": body}),
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS
+            )
+            sent_count += 1
+        except WebPushException:
+            pass
+    return sent_count
+
 # ─── Startup: Seed DB ────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
     db = SessionLocal()
     try:
-        # 1. Clear existing categories and tasks to ensure we use the correct 7 teams
-        # Only do this if we haven't seeded our specific 'Tim Fire & Floods' yet
-        if not db.query(TeamCategory).filter(TeamCategory.name == "Tim Fire & Floods").first():
-            print("Resetting Team Categories to match PREVENTIVE_CHECKLIST.md...")
-            # We don't delete everything to avoid breaking existing users/reports, 
-            # but we will ensure our 7 teams are present.
-            
-            target_teams = [
-                "Tim Fire & Floods", "Tim Pengamanan", "Tim Evakuasi", 
-                "Tim P3K", "Tim Logistik", "Tim Rehabilitasi", "Tim Security"
-            ]
-            
-            for team_name in target_teams:
-                existing = db.query(TeamCategory).filter(TeamCategory.name == team_name).first()
-                if not existing:
-                    db.add(TeamCategory(name=team_name))
-            db.commit()
-
-        # 2. Re-map categories so we can seed tasks and users
-        all_cats = db.query(TeamCategory).all()
-        cat_map = {c.name: c.id for c in all_cats}
-
-        # 3. Seed Preventive Tasks (Force seed if count is 0)
-        if not db.query(PreventiveTask).count():
-            print("Seeding Preventive Tasks...")
-            checklist_data = {
-                "Tim Fire & Floods": [
-                    "Pemeriksaan APAR (tekanan & kondisi)", 
-                    "Cek hydrant & pompa air berfungsi normal", 
-                    "Pastikan jalur drainase tidak tersumbat", 
-                    "Identifikasi area rawan genangan", 
-                    "Inspeksi instalasi listrik berisiko"
-                ],
-                "Tim Pengamanan": [
-                    "Cek akses jalur evakuasi tidak terhalang", 
-                    "Pastikan signage evakuasi terlihat jelas", 
-                    "Kontrol area rawan (gudang, genset, dll)", 
-                    "Briefing kesiapsiagaan kepada karyawan", 
-                    "Simulasi pengamanan area darurat"
-                ],
-                "Tim Evakuasi": [
-                    "Verifikasi titik kumpul aman & jelas", 
-                    "Uji jalur evakuasi secara berkala", 
-                    "Sosialisasi jalur evakuasi ke karyawan", 
-                    "Pendataan jumlah karyawan aktif", 
-                    "Simulasi evakuasi minimal berkala"
-                ],
-                "Tim P3K": [
-                    "Cek kelengkapan & masa berlaku alat P3K", 
-                    "Menyediakan obat dasar & alat medis", 
-                    "Update daftar petugas P3K", 
-                    "Simulasi penanganan korban", 
-                    "Koordinasi dengan klinik/RS terdekat"
-                ],
-                "Tim Logistik": [
-                    "Cek ketersediaan alat darurat (pompa, APAR, dll)", 
-                    "Stok air minum & konsumsi darurat", 
-                    "Kesiapan alat komunikasi (HT, dll)", 
-                    "Penempatan alat mudah dijangkau", 
-                    "Update inventaris logistic"
-                ],
-                "Tim Rehabilitasi": [
-                    "Identifikasi area prioritas pemulihan", 
-                    "Kesiapan alat perbaikan", 
-                    "Backup fasilitas penting (genset, dll)", 
-                    "Rencana pemulihan operasional", 
-                    "Dokumentasi kondisi awal area"
-                ],
-                "Tim Security": [
-                    "Area patroli keamanan rutin", 
-                    "Cek CCTV & sistem alarm", 
-                    "Kontrol akses pintu masuk/keluar", 
-                    "Pengecekan kunci & gembok", 
-                    "Laporan harian keamanan"
-                ]
-            }
-
-            for team_name, tasks in checklist_data.items():
-                cat_id = cat_map.get(team_name)
-                if cat_id:
-                    for t_title in tasks:
-                        db.add(PreventiveTask(team_category_id=cat_id, title=t_title))
-            db.commit()
-
-        # 4. Seed Default Users for each Team
-        for team_name in ["Tim Fire & Floods", "Tim Pengamanan", "Tim Evakuasi", "Tim P3K", "Tim Logistik", "Tim Rehabilitasi", "Tim Security"]:
-            username = team_name.lower().replace(" ", "_").replace("&", "and")
-            existing_user = db.query(User).filter(User.username == username).first()
-            if not existing_user:
-                cat_id = cat_map.get(team_name)
-                db.add(User(
-                    employee_id=username,
-                    username=username,
-                    password="123",
-                    role="disaster",
-                    name=team_name,
-                    team_category_id=cat_id
-                ))
-        
-        # Admin user
         if not db.query(User).filter(User.username == "admin").first():
             db.add(User(employee_id="admin", username="admin", password="123", role="admin", name="Administrator"))
-            
         db.commit()
     except Exception as e:
         print(f"Error during startup seeding: {e}")
@@ -517,6 +432,46 @@ async def complete_task(
             
     return {"status": "success", "task_id": task.id, "photo_path": task.photo_path, "event_completed": uncompleted_tasks == 0}
 
+@app.post("/api/emergency/evacuate")
+async def trigger_evacuation(request: Request, db: Session = Depends(get_db)):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    if not user or not user.team_category or user.id != user.team_category.leader_id:
+        raise HTTPException(status_code=403, detail="Hanya Team Leader yang dapat memberikan instruksi evakuasi!")
+    
+    # 1. Create a high-alert Emergency Event
+    active_event = db.query(EmergencyEvent).filter(EmergencyEvent.is_active == True).first()
+    if not active_event:
+        active_event = EmergencyEvent(status_level="EVAKUASI")
+        db.add(active_event)
+        db.commit()
+        db.refresh(active_event)
+        
+        # Add emergency tasks for each team from templates
+        templates = db.query(TaskTemplate).all() # Get all templates for high alert?
+        for t in templates:
+             db.add(EmergencyTask(
+                 event_id=active_event.id,
+                 template_id=t.id,
+                 team_category_id=t.team_category_id,
+                 title=t.title
+             ))
+        db.commit()
+        
+    # 2. Log activity
+    log = ActivityLog(message=f"INSTRUKSI EVAKUASI dikeluarkan oleh {user.name} ({user.team_category.name})", condition_matched="EVAKUASI")
+    db.add(log)
+    db.commit()
+    
+    # 3. Broadcast notification
+    msg = "INSTRUKSI EVAKUASI: Silahkan tinggalkan gedung melalui jalur evakuasi menuju titik kumpul!"
+    send_broadcast_notification(db, "🚨 EMERGENCY: EVAKUASI! 🚨", msg)
+    
+    return {"status": "success", "message": "Instruksi evakuasi telah dikirim ke seluruh karyawan."}
+
 # ─── Routes: Admin Dashboard ────────────────────────────────────────────────
 @app.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
@@ -542,6 +497,50 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
         "users": users,
         "categories": categories
     })
+
+# ─── Admin API: Leadership Management ──────────────────────────────────────
+@app.get("/api/admin/teams")
+async def get_admin_teams(request: Request, db: Session = Depends(get_db)):
+    require_role(request, "admin")
+    teams = db.query(TeamCategory).all()
+    result = []
+    for t in teams:
+        leader_name = "Belum Ditentukan"
+        if t.leader:
+            leader_name = t.leader.name
+        result.append({
+            "id": t.id,
+            "name": t.name,
+            "leader_id": t.leader_id,
+            "leader_name": leader_name
+        })
+    return result
+
+@app.get("/api/admin/eligible-leaders")
+async def get_eligible_leaders(request: Request, db: Session = Depends(get_db)):
+    require_role(request, "admin")
+    users = db.query(User).filter(User.role == "disaster").all()
+    return [{"id": u.id, "name": u.name, "emp_id": u.employee_id} for u in users]
+
+@app.post("/api/admin/teams/{team_id}/assign-leader")
+async def assign_team_leader(team_id: int, request: Request, db: Session = Depends(get_db)):
+    require_role(request, "admin")
+    data = await request.json()
+    user_id = data.get("user_id")
+    
+    team = db.query(TeamCategory).filter(TeamCategory.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Check if user target is valid or null (to unassign)
+    if user_id:
+        user = db.query(User).filter(User.id == user_id, User.role == "disaster").first()
+        if not user:
+             raise HTTPException(status_code=400, detail="User target tidak valid atau bukan anggota Tim KTD")
+        
+    team.leader_id = user_id
+    db.commit()
+    return {"status": "success"}
 
 @app.get("/disaster/dashboard", response_class=HTMLResponse)
 async def disaster_dashboard(request: Request, db: Session = Depends(get_db)):
@@ -577,7 +576,7 @@ async def get_preventive_tasks(request: Request, db: Session = Depends(get_db)):
     if not user_session:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    user = db.query(User).filter(User.username == user_session["username"]).first()
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
     if not user or not user.team_category_id:
         return {"tasks": []}
     
@@ -668,6 +667,11 @@ async def admin_delete_task_photo(request: Request, task_id: int, db: Session = 
         task.is_completed = False
         task.completed_at = None
         task.completed_by = None
+        # Also clear report fields
+        task.report_content = None
+        task.actions_taken = None
+        task.planned_actions = None
+        task.monitoring_notes = None
         db.commit()
     return RedirectResponse(url="/admin/dashboard#photos-section", status_code=303)
 
@@ -717,6 +721,14 @@ async def admin_delete_user(request: Request, user_id: int, db: Session = Depend
     require_role(request, "admin")
     target_user = db.query(User).filter(User.id == user_id).first()
     if target_user and target_user.role != "admin":
+        # 1. Clear leadership before deleting
+        db.query(TeamCategory).filter(TeamCategory.leader_id == user_id).update({TeamCategory.leader_id: None})
+        
+        # 2. Nullify references in Emergency Tasks and Reports
+        db.query(EmergencyTask).filter(EmergencyTask.completed_by == user_id).update({EmergencyTask.completed_by: None})
+        db.query(AdHocReport).filter(AdHocReport.user_id == user_id).update({AdHocReport.user_id: None})
+        db.query(PreventiveReport).filter(PreventiveReport.user_id == user_id).update({PreventiveReport.user_id: None})
+        
         db.delete(target_user)
         db.commit()
     return RedirectResponse(url="/admin/dashboard#users-section", status_code=303)
@@ -736,8 +748,14 @@ async def admin_delete_category(request: Request, cat_id: int, db: Session = Dep
     require_role(request, "admin")
     cat = db.query(TeamCategory).filter(TeamCategory.id == cat_id).first()
     if cat:
-        # Before deleting, nullify references in users
+        # 1. Nullify references in users
         db.query(User).filter(User.team_category_id == cat_id).update({User.team_category_id: None})
+        
+        # 2. Delete or nullify referencing tasks/templates
+        db.query(PreventiveTask).filter(PreventiveTask.team_category_id == cat_id).delete()
+        db.query(EmergencyTask).filter(EmergencyTask.team_category_id == cat_id).update({EmergencyTask.team_category_id: None})
+        db.query(TaskTemplate).filter(TaskTemplate.team_category_id == cat_id).update({TaskTemplate.team_category_id: None})
+        
         db.delete(cat)
         db.commit()
     return RedirectResponse(url="/admin/dashboard#categories-section", status_code=303)

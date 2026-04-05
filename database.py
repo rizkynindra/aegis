@@ -36,6 +36,9 @@ class TeamCategory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, index=True)
+    leader_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    leader = relationship("User", foreign_keys=[leader_id])
 
 class User(Base):
     __tablename__ = "users"
@@ -48,7 +51,7 @@ class User(Base):
     name = Column(String(200))
     team_category_id = Column(Integer, ForeignKey("team_categories.id"), nullable=True)
 
-    team_category = relationship("TeamCategory")
+    team_category = relationship("TeamCategory", foreign_keys=[team_category_id])
 
 class NotificationSetting(Base):
     __tablename__ = "notification_settings"

@@ -866,3 +866,52 @@ tr:hover td {
     70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); }
     100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
 }
+
+/* --- Leader Management Enhancements --- */
+#leaders-section table td {
+    vertical-align: middle;
+    padding: 1rem 1.5rem;
+}
+
+#leaders-list tr {
+    transition: background 0.2s;
+}
+
+#leaders-list tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#assignLeaderModal .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-active);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8);
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Ensure modal is visible when active */
+.modal-overlay.active {
+    display: flex !important;
+}
