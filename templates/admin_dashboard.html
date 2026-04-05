@@ -54,6 +54,9 @@
                 <a class="nav-item" href="#categories-section">
                     <span class="nav-icon">🏷️</span> Kategori Tim KTD
                 </a>
+                <a class="nav-item" href="#leaders-section">
+                    <span class="nav-icon">👑</span> Manajemen Leader
+                </a>
                 <a class="nav-item" href="#logs-section">
                     <span class="nav-icon">📋</span> Riwayat Aktivitas
                 </a>
@@ -85,6 +88,10 @@
             <a href="#categories-section" class="nav-item">
                 <span class="nav-icon">🏷️</span>
                 <span class="nav-label">Teams</span>
+            </a>
+            <a href="#leaders-section" class="nav-item">
+                <span class="nav-icon">👑</span>
+                <span class="nav-label">Leaders</span>
             </a>
             <a href="#logs-section" class="nav-item">
                 <span class="nav-icon">📋</span>
@@ -226,39 +233,69 @@
                             placeholder="Nama Kategori Baru (misal: Tim Evakuasi)" required style="flex: 1;">
                         <button type="submit" class="btn btn-primary">+ Tambah Kategori</button>
                     </form>
+                <div class="card-body" style="padding:0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Kategori</th>
+                                <th style="text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td style="color: var(--text-muted);">#{{ cat.id }}</td>
+                                <td style="font-weight: 500; color: var(--text-primary);">{{ cat.name }}</td>
+                                <td style="text-align: right;">
+                                    <form action="/admin/categories/{{ cat.id }}/delete" method="POST"
+                                        style="display:inline;"
+                                        onsubmit="return confirm('Hapus kategori {{ cat.name }}? Semua user dalam kategori ini akan di-reset kategorinya.');">
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">🏷️</div>Belum ada kategori tim.
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nama Kategori</th>
-                            <th style="text-align: right;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cat in categories %}
-                        <tr>
-                            <td style="color: var(--text-muted);">#{{ cat.id }}</td>
-                            <td style="font-weight: 500; color: var(--text-primary);">{{ cat.name }}</td>
-                            <td style="text-align: right;">
-                                <form action="/admin/categories/{{ cat.id }}/delete" method="POST"
-                                    style="display:inline;"
-                                    onsubmit="return confirm('Hapus kategori {{ cat.name }}? Semua user dalam kategori ini akan di-reset kategorinya.');">
-                                    <button type="submit" class="btn btn-danger">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="3">
-                                <div class="empty-state">
-                                    <div class="empty-icon">🏷️</div>Belum ada kategori tim.
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            </div>
+
+            <!-- Leader Management -->
+            <div class="card" id="leaders-section" style="margin-top: 2rem;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Manajemen Leader KTD</div>
+                        <div class="card-subtitle">Tentukan satu pemimpin (Leader) untuk setiap kategori tim tanggap darurat.</div>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kategori Tim</th>
+                                <th>Leader Saat Ini</th>
+                                <th style="text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaders-list">
+                            <!-- Populated by JS -->
+                            <tr>
+                                <td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    Memuat data leader...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- User Management -->
@@ -304,7 +341,6 @@
                     </thead>
                     <tbody>
                         {% for u in users %}
-                        <tr>
                         <tr>
                             <td style="font-weight: 600; color: var(--text-primary);">{{ u.employee_id }}</td>
                             <td style="color: var(--text-secondary);">{{ u.name }}</td>
@@ -453,6 +489,32 @@
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Assign Leader Modal -->
+            <div class="modal-overlay" id="assignLeaderModal">
+                <div class="card" style="width: 100%; max-width: 500px; margin: 2rem;">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Pilih Leader Baru</div>
+                            <div class="card-subtitle" id="assign-modal-team-name">Menugaskan leader untuk tim...</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="assign-modal-team-id">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Daftar Anggota Tim KTD yang Eligible:</label>
+                            <select id="eligible-leader-select" class="form-select" style="width: 100%;">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button class="btn btn-ghost" onclick="closeLeaderModal()">Batal</button>
+                            <button class="btn btn-primary" onclick="submitLeaderAssignment()">Simpan Perubahan</button>
+                        </div>
                     </div>
                 </div>
             </div>
