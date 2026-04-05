@@ -1,172 +1,88 @@
-# Data Prakiraan Cuaca Terbuka BMKG
+# AEGIS (Advanced Emergency & Guardian Intelligence System) 🛡️
 
-Data Prakiraan Cuaca Terbuka BMKG telah tersedia di portal https://data.bmkg.go.id/prakiraan-cuaca dengan format JSON. Berikut kode baris pemrograman PHP yang digunakan dalam mengolah data prakiraan cuaca tersebut.
+AEGIS is a professional-grade, mobile-first Disaster Management System (DMS) designed for corporate and organizational safety. Built with a focus on real-time responsiveness and intuitive user experience, AEGIS connects employees, disaster response teams, and administrators into a unified safety network.
 
-## Mengolah Data JSON Prakiraan Cuaca
+![AEGIS Dashboard](https://github.com/rizkynindra/aegis/raw/main/static/images/logo.jpeg)
 
-#### Kode Baris PHP untuk Mengolah Data `prakiraan-cuaca.php`
-```php
-<?php
-// Get API URL
-$api_url = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=31.71.01.1001";
-$response_body = @file_get_contents($api_url);
+## 🌟 Key Features
 
-// Check if fail
-if ($response_body === false) {
-    die("ERROR: Gagal mengambil data.");
-}
+### 📱 Mobile-First PWA
+AEGIS is designed as a **Progressive Web App**, providing a native-like experience on mobile devices.
+- **Offline Readiness**: Basic functionality remains available even with intermittent connectivity.
+- **App-like Navigation**: Thumb-friendly bottom navigation and fixed headers for rapid access.
+- **Installable**: Can be added directly to the home screen of Android and iOS devices.
 
-// Decode String JSON
-$data = json_decode($response_body, true);
+### 🛰️ Real-Time Hazard Monitoring
+Full integration with **BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)** Open Data API.
+- **Weather Forecasts**: Hourly localized weather data for proactive planning.
+- **Dynamic Status**: Automated system status switching (Normal, Waspada, Siaga) based on environmental conditions.
 
-if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
-    die(
-        "ERROR: Data bukan format JSON yang valid. " .
-            htmlspecialchars(json_last_error_msg())
-    );
-}
+### 👥 Role-Based Ecosystem
+- **Employee Portal**: Personalized dashboards, weather awareness, and rapid incident reporting (Ad-Hoc).
+- **Disaster Team (Tim KTD)**: Managed emergency event logs, task checklists, and team-specific actions.
+- **Admin Command Center**: Complete oversight of system configuration, user management, and emergency orchestration.
 
-// Set header
-header("Content-Type: text/html; charset=utf-8");
-?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prakiraan Cuaca BMKG</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.5; padding: 15px; }
-        h2, h3, h4 { margin-top: 1.5em; margin-bottom: 0.5em; }
-        ul { list-style: none; padding-left: 0; }
-        li { margin-bottom: 0.5em; border-bottom: 1px solid #eee; padding-bottom: 0.5em; }
-        img { width: 20px; height: 20px; vertical-align: middle; margin-left: 5px; }
-        pre { background-color: #f4f4f4; padding: 10px; border: 1px solid #ddd; overflow-x: auto; }
-    </style>
-</head>
-<body>
+### 🚨 Rapid Incident Reporting
+Employees can report emergencies in seconds:
+- **Category Selection**: Pre-defined disaster categories (Fire, Flood, Earthquake, etc.).
+- **Photo Integration**: Upload photographic evidence directly from the field.
+- **Real-Time Feed**: A synchronized activity feed visible to relevant responders.
 
-<h1>Prakiraan Cuaca BMKG</h1>
+### 🔔 Smart Notifications
+Utilizes **Web Push Notifications** to ensure that critical alerts are seen immediately, even if the application is not actively open in the browser.
 
-<?php
-// Location
-if (isset($data["lokasi"]["desa"]) && isset($data["lokasi"]["kecamatan"])) {
-    echo "<h2>Desa/Kelurahan: " .
-        htmlspecialchars($data["lokasi"]["desa"]) .
-        "</h2>";
-    echo "<p>";
-    echo "Kecamatan: " .
-        htmlspecialchars($data["lokasi"]["kecamatan"] ?? "N/A") .
-        "<br>";
-    echo "Kota/Kabupaten: " .
-        htmlspecialchars($data["lokasi"]["kotkab"] ?? "N/A") .
-        "<br>";
-    echo "Provinsi: " .
-        htmlspecialchars($data["lokasi"]["provinsi"] ?? "N/A") .
-        "<br>";
-    echo "Koordinat Latitude: " .
-        htmlspecialchars($data["lokasi"]["lat"] ?? "N/A") .
-        ", Longitude: " .
-        htmlspecialchars($data["lokasi"]["lon"] ?? "N/A") .
-        "<br>";
-    echo "Timezone: " .
-        htmlspecialchars($data["lokasi"]["timezone"] ?? "N/A") .
-        "<br>";
-    echo "</p>";
-} else {
-    echo "<h2>Lokasi Tidak Ditemukan</h2>";
-}
+---
 
-// Weather forecast data
-echo "<h3>Detail Prakiraan Cuaca:</h3>";
-if (isset($data["data"][0]["cuaca"]) && is_array($data["data"][0]["cuaca"])) {
-    foreach ($data["data"][0]["cuaca"] as $index_hari => $prakiraan_harian) {
-        echo "<h4>Hari ke-" . ($index_hari + 1) . "</h4>";
-        echo "<ul>";
-        if (is_array($prakiraan_harian)) {
-            foreach ($prakiraan_harian as $prakiraan) {
-                $waktu_lokal = isset($prakiraan["local_datetime"])
-                    ? htmlspecialchars($prakiraan["local_datetime"])
-                    : "N/A";
-                $deskripsi = isset($prakiraan["weather_desc"])
-                    ? htmlspecialchars($prakiraan["weather_desc"])
-                    : "N/A";
-                $alt_text = isset($prakiraan["weather_desc"])
-                    ? htmlspecialchars(
-                        $prakiraan["weather_desc"],
-                        ENT_QUOTES,
-                        "UTF-8",
-                    )
-                    : "Ikon Cuaca";
-                $suhu = isset($prakiraan["t"])
-                    ? htmlspecialchars($prakiraan["t"])
-                    : "N/A";
-                $kelembapan = isset($prakiraan["hu"])
-                    ? htmlspecialchars($prakiraan["hu"])
-                    : "N/A";
-                $kec_angin = isset($prakiraan["ws"])
-                    ? htmlspecialchars($prakiraan["ws"])
-                    : "N/A";
-                $arah_angin = isset($prakiraan["wd"])
-                    ? htmlspecialchars($prakiraan["wd"])
-                    : "N/A";
-                $jarak_pandang = isset($prakiraan["vs_text"])
-                    ? htmlspecialchars($prakiraan["vs_text"])
-                    : "N/A";
+## 🛠️ Technology Stack
 
-                $raw_img_url = isset($prakiraan["image"])
-                    ? $prakiraan["image"]
-                    : "";
-                $img_url_processed = "";
+### Backend
+- **FastAPI**: High-performance Python framework for building modern APIs.
+- **SQLAlchemy**: Robust ORM for database abstraction and security.
+- **Jinja2**: Server-side templating for dynamic SEO-friendly content.
 
-                if (!empty($raw_img_url)) {
-                    $img_url_processed = str_replace(" ", "%20", $raw_img_url);
-                }
+### Frontend
+- **Vanilla JavaScript**: Pure, high-performance logic with no heavy framework overhead.
+- **Custom CSS3**: A premium, "Mobile-First" design system featuring glassmorphism and deep-maroon aesthetics.
+- **Workbox/Service Workers**: Handling PWA caching and background sync.
 
-                echo "<li>";
-                echo "<strong>Jam:</strong> " . $waktu_lokal . " | ";
-                echo "<strong>Cuaca:</strong> " . $deskripsi . " ";
-                if (
-                    $img_url_processed &&
-                    filter_var($img_url_processed, FILTER_VALIDATE_URL)
-                ) {
-                    echo '<img src="' .
-                        $img_url_processed .
-                        '" alt="' .
-                        $alt_text .
-                        '" title="' .
-                        $alt_text .
-                        '"> | ';
-                }
-                echo "<strong>Suhu:</strong> " . $suhu . "°C | ";
-                echo "<strong>Kelembapan:</strong> " . $kelembapan . "% | ";
-                echo "<strong>Kec. Angin:</strong> " . $kec_angin . "km/j | ";
-                echo "<strong>Arah Angin:</strong> dari " . $arah_angin . " | ";
-                echo "<strong>Jarak Pandang:</strong> " . $jarak_pandang;
-                echo "</li>";
-            }
-        } else {
-            echo "<li>Data tidak valid.</li>";
-        }
-        echo "</ul>";
-    }
-} else {
-    echo "<p>Struktur data prakiraan cuaca tidak ditemukan.</p>";
-}
+### Infrastructure
+- **Vercel**: Optimized deployment for serverless architecture.
+- **Neon/PostgreSQL**: Scalable database layer for production environments.
 
-// Debugging $data
-/*
-echo "<pre>";
-print_r($data);
-echo "</pre>";
-*/
-?>
-</body>
-</html>
-```
+---
 
-## Attribution / Sumber Data
-**Perhatian!** Wajib untuk mencantumkan BMKG (Badan Meteorologi, Klimatologi, dan Geofisika) sebagai sumber data dan menampilkannya pada aplikasi atau sistem Anda.
+## 🚀 Getting Started
 
+### Prerequisites
+- Python 3.9+
+- SQLite (Development) or PostgreSQL (Production)
 
-udah ngepush ni boss
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/rizkynindra/aegis.git
+   cd aegis
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up environment variables (.env):
+   ```env
+   DATABASE_URL=your_postgresql_url
+   SESSION_SECRET=your_secret_key
+   VAPID_PUBLIC_KEY=your_key
+   VAPID_PRIVATE_KEY=your_key
+   ```
+4. Run the development server:
+   ```bash
+   python app.py
+   ```
+
+---
+
+## 📖 Attribution
+AEGIS proudly uses open data provided by **BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)**. All weather information is processed in accordance with open data terms.
+
+---
+*Created with ❤️ by the AEGIS Development Team.*

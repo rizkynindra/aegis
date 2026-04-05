@@ -63,17 +63,6 @@
             </div>
 
             <div class="section-header">
-                <h2 class="section-title">Informasi Kesiapsiagaan</h2>
-            </div>
-            
-            <div id="info-msg" style="background: var(--card-bg); border: 1px solid var(--border); padding: 1.5rem; border-radius: var(--radius-lg); line-height: 1.6; color: var(--text-secondary);">
-                Saat ini kondisi cuaca terpantau normal. Tim KTD (Kesiapsiagaan Tanggap Darurat) siap siaga memantau kondisi lingkungan kantor untuk menjamin keselamatan seluruh karyawan. 
-                Jika terjadi perubahan cuaca ekstrem, notifikasi akan segera dikirimkan ke perangkat Anda.
-            </div>
-        </main>
-
-        <section class="activity-side">
-            <div class="section-header">
                 <h2 class="section-title">Aktivitas Terbaru</h2>
             </div>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
@@ -84,11 +73,12 @@
                 <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat aktivitas...</div>
             </div>
 
-            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); border: 1px dashed var(--border); text-align: center;">
+            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); border: 1px dashed var(--border); text-align: center; margin-bottom: 2rem;">
                 <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Lihat semua laporan kejadian terbaru (1 Bulan)</div>
                 <button class="btn-submit" style="margin-top: 0; padding: 0.6rem;" onclick="toggleReportsList()">Buka Arsip Laporan</button>
             </div>
-        </section>
+        </main>
+
     </div>
 
     <!-- Bottom Navigation (Mobile Only) -->
@@ -115,7 +105,7 @@
     </nav>
 
     <!-- Floating Action Button (Handled by JS to trigger modal) -->
-    <div class="fab-report" id="openReportModal" title="Lapor Kejadian" style="display: none;">
+    <div class="fab-report" id="openReportModal" title="Lapor Kejadian">
         <span>➕</span> <span style="font-size: 0.9rem; font-weight: 700; margin-left: 8px;">TAMBAH LAPORAN</span>
     </div>
 

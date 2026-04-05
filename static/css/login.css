@@ -227,17 +227,48 @@ body {
 }
 
 @media (max-width: 768px) {
+    .login-wrapper {
+        flex-direction: column !important;
+        max-width: 420px;
+        min-height: auto;
+        border-radius: 12px;
+        overflow: visible;
+        display: flex !important;
+    }
+
     .login-brand {
+        display: flex !important;
+        flex: none !important;
+        padding: 2.5rem 1.5rem;
+        width: 100%;
+        background: linear-gradient(135deg, #d32f2f 0%, #ff5252 100%) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        min-height: 180px;
+    }
+
+    .brand-logo-img {
+        width: 70px !important;
+        height: 70px !important;
+        margin-bottom: 0.75rem;
+        display: block !important;
+        filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.4));
+    }
+
+    .login-brand h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+        display: block !important;
+    }
+
+    .login-brand p,
+    .brand-features {
         display: none;
     }
 
-    .login-wrapper {
-        max-width: 420px;
-        border-radius: 12px;
-    }
-
     .login-form-section {
-        padding: 2rem 1.5rem;
+        padding: 2.5rem 1.75rem;
+        flex: 1;
+        width: 100%;
     }
 }
 
@@ -252,6 +283,10 @@ body {
         border-radius: 0;
         border: none;
         box-shadow: none;
+    }
+
+    .login-brand {
+        padding: 3rem 1.5rem;
     }
 
     .login-form-section {

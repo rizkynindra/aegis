@@ -46,11 +46,14 @@ body {
 .mobile-header .brand {
     margin-bottom: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .user-badge {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     background: var(--accent);
     color: white;
     border-radius: 50%;
