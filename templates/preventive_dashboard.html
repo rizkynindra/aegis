@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preventive Checklist - AEGIS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='css/disaster.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/preventive.css') }}">
 </head>
+
 <body>
     <!-- Mobile Header -->
     <header class="mobile-header">
         <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
         <div class="user-badge">{{ user.name[0] }}</div>
@@ -22,10 +25,10 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
-        
+
         <div class="user-profile">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-npk">{{ user.employee_id }}</div>
@@ -89,20 +92,23 @@
     <div id="evidence-modal" class="evidence-overlay">
         <div class="evidence-form">
             <h2 style="margin-bottom: 0.5rem; font-weight: 800; font-size: 1.2rem;">Kirim Bukti Foto</h2>
-            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2rem;" id="modal-task-title">Melakukan pemeriksaan APAR rutin.</p>
-            
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2rem;" id="modal-task-title">Melakukan
+                pemeriksaan APAR rutin.</p>
+
             <form id="evidenceForm" onsubmit="submitReport(event)">
                 <input type="hidden" id="modal-task-id">
-                
+
                 <div class="photo-preview" onclick="document.getElementById('photo-input').click()">
                     <span id="preview-placeholder">📸 Tap untuk ambil foto</span>
                     <img id="photo-preview-img" style="display: none;">
-                    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(event)" required>
+                    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display: none;"
+                        onchange="handlePhotoSelect(event)" required>
                 </div>
 
                 <div style="display: flex; gap: 12px;">
                     <button type="button" class="tab-btn" style="flex:1" onclick="closeModal()">Batal</button>
-                    <button type="submit" class="btn-checklist" style="flex:2; height: auto; padding: 12px;">Kirim Laporan</button>
+                    <button type="submit" class="btn-checklist" style="flex:2; height: auto; padding: 12px;">Kirim
+                        Laporan</button>
                 </div>
             </form>
         </div>
@@ -110,4 +116,5 @@
 
     <script src="{{ url_for('static', path='js/preventive.js') }}"></script>
 </body>
+
 </html>

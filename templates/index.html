@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AEGIS Dashboard - Layanan Informasi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0a0505">
-    
+
     <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
 </head>
+
 <body>
     <!-- Mobile Header -->
     <header class="mobile-header">
         <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
         <div class="user-badge">{{ user.name[0] }}</div>
@@ -27,7 +30,7 @@
             <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
-        
+
         <div class="user-profile">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-npk">{{ user.employee_id }}</div>
@@ -73,9 +76,12 @@
                 <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat aktivitas...</div>
             </div>
 
-            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); border: 1px dashed var(--border); text-align: center; margin-bottom: 2rem;">
-                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Lihat semua laporan kejadian terbaru (1 Bulan)</div>
-                <button class="btn-submit" style="margin-top: 0; padding: 0.6rem;" onclick="toggleReportsList()">Buka Arsip Laporan</button>
+            <div
+                style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: var(--radius-md); border: 1px dashed var(--border); text-align: center; margin-bottom: 2rem;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Lihat semua laporan
+                    kejadian terbaru (1 Bulan)</div>
+                <button class="btn-submit" style="margin-top: 0; padding: 0.6rem;" onclick="toggleReportsList()">Buka
+                    Arsip Laporan</button>
             </div>
         </main>
 
@@ -136,19 +142,23 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Isi Laporan</label>
-                    <textarea class="form-textarea" name="content" placeholder="Deskripsikan kejadian secara detail..." required></textarea>
+                    <textarea class="form-textarea" name="content" placeholder="Deskripsikan kejadian secara detail..."
+                        required></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Penanganan yang telah dilakukan</label>
-                    <textarea class="form-textarea" name="actions_taken" placeholder="Apa yang sudah dilakukan di lokasi?"></textarea>
+                    <textarea class="form-textarea" name="actions_taken"
+                        placeholder="Apa yang sudah dilakukan di lokasi?"></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tindakan Perbaikan yang akan dilakukan</label>
-                    <textarea class="form-textarea" name="planned_actions" placeholder="Rencana tindak lanjut selanjutnya..."></textarea>
+                    <textarea class="form-textarea" name="planned_actions"
+                        placeholder="Rencana tindak lanjut selanjutnya..."></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Pemantauan Tindakan Perbaikan</label>
-                    <textarea class="form-textarea" name="monitoring_notes" placeholder="Catatan pemantauan tambahan..."></textarea>
+                    <textarea class="form-textarea" name="monitoring_notes"
+                        placeholder="Catatan pemantauan tambahan..."></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Foto Bukti (Opsional)</label>
@@ -162,9 +172,11 @@
     <script src="{{ url_for('static', path='js/index.js') }}"></script>
     <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
 </body>
+
 </html>
 
-    <script src="{{ url_for('static', path='js/index.js') }}"></script>
-    <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
+<script src="{{ url_for('static', path='js/index.js') }}"></script>
+<script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
 </body>
+
 </html>

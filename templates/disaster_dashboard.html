@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disaster Response Center - AEGIS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='css/disaster.css') }}">
 </head>
+
 <body>
     <!-- Mobile Header -->
     <header class="mobile-header">
         <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
         <div class="user-badge">{{ user.name[0] }}</div>
@@ -21,10 +24,10 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
             <span>AEGIS</span>
         </div>
-        
+
         <div class="user-profile">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-npk">{{ user.employee_id }}</div>
@@ -41,10 +44,12 @@
             <a href="javascript:void(0)" onclick="openHistory()" class="nav-item">
                 <span>🕒</span> <span>Riwayat SOP</span>
             </a>
-            
+
             {% if user.id == user.team_category.leader_id and event %}
             <div style="margin-top: 2rem; padding: 0 1rem;">
-                <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 1px;">Leader Actions</div>
+                <div
+                    style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 1px;">
+                    Leader Actions</div>
                 <button class="btn-evacuate" onclick="triggerEvacuation()">
                     <span>🚨</span> INSTRUKSI EVAKUASI
                 </button>
@@ -71,7 +76,7 @@
             <div class="section-header">
                 <h2 class="section-title">Emergency Tasks (SOP Tindakan)</h2>
             </div>
-            
+
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
                 Klik pada tugas di bawah untuk melakukan pelaporan.
             </p>
@@ -89,7 +94,8 @@
             <div class="report-placeholder" id="no-task-selected">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">👈</div>
                 <h3>Pilih Tugas</h3>
-                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Pilih satu penugasan di samping untuk mulai melaporkan kejadian.</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem;">Pilih satu penugasan di samping untuk mulai
+                    melaporkan kejadian.</p>
             </div>
 
             <div id="report-form-container" style="display: none;">
@@ -98,33 +104,39 @@
 
                 <form id="incidentForm" onsubmit="submitIncident(event)">
                     <input type="hidden" id="selected-task-id" name="task_id">
-                    
+
                     <div class="form-group">
                         <label class="form-label">Bukti Foto Tindakan</label>
                         <label class="file-btn" id="photo-label">
                             <span id="photo-text">📸 Ambil/Pilih Foto</span>
-                            <input type="file" name="photo" id="photo-input" style="display:none" accept="image/*" capture="environment" onchange="previewTaskPhoto()">
+                            <input type="file" name="photo" id="photo-input" style="display:none" accept="image/*"
+                                capture="environment" onchange="previewTaskPhoto()">
                         </label>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Isi Laporan / Detail Kondisi</label>
-                        <textarea name="content" class="form-textarea" placeholder="Deskripsikan situasi saat melakukan tindakan ini..." required></textarea>
+                        <textarea name="content" class="form-textarea"
+                            placeholder="Deskripsikan situasi saat melakukan tindakan ini..." required></textarea>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Penanganan yang telah dilakukan</label>
-                        <textarea name="actions_taken" class="form-textarea" placeholder="Tindakan darurat yang sudah dikerjakan..."></textarea>
+                        <textarea name="actions_taken" class="form-textarea"
+                            placeholder="Tindakan darurat yang sudah dikerjakan..."></textarea>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tindakan Perbaikan (Opsional)</label>
-                        <textarea name="planned_actions" class="form-textarea" placeholder="Rencana tindak lanjut..."></textarea>
+                        <textarea name="planned_actions" class="form-textarea"
+                            placeholder="Rencana tindak lanjut..."></textarea>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Pemantauan (Opsional)</label>
-                        <textarea name="monitoring_notes" class="form-textarea" placeholder="Catatan hasil pemantauan..."></textarea>
+                        <textarea name="monitoring_notes" class="form-textarea"
+                            placeholder="Catatan hasil pemantauan..."></textarea>
                     </div>
                     <button type="submit" class="btn-submit">Selesaikan Tugas & Kirim Laporan</button>
-                    <button type="button" onclick="deselectTask()" style="background:transparent; border:none; color:var(--text-muted); width:100%; margin-top:1rem; cursor:pointer; font-size:0.8rem;">Batal</button>
+                    <button type="button" onclick="deselectTask()"
+                        style="background:transparent; border:none; color:var(--text-muted); width:100%; margin-top:1rem; cursor:pointer; font-size:0.8rem;">Batal</button>
                 </form>
             </div>
         </section>
@@ -149,7 +161,7 @@
             <span class="nav-label">Keluar</span>
         </a>
     </nav>
-    
+
     <!-- Floating Action Button for Leaders (Desktop & Mobile fallback) -->
     {% if user.id == user.team_category.leader_id and event %}
     <div class="fab-evacuate" onclick="triggerEvacuation()" title="Instruksi Evakuasi">
@@ -170,7 +182,7 @@
     <script>
         async function triggerEvacuation() {
             if (!confirm("⚠️ PERINGATAN: Anda akan mengeluarkan instruksi EVAKUASI untuk SELURUH karyawan. Lanjutkan?")) return;
-            
+
             try {
                 const res = await fetch('/api/emergency/evacuate', { method: 'POST' });
                 const data = await res.json();
@@ -187,4 +199,5 @@
     </script>
     <script src="{{ url_for('static', path='js/push-manager.js') }}"></script>
 </body>
+
 </html>
