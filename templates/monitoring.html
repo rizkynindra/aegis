@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS - Monitoring Terpadu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --green: #2ecc71;
+            --yellow: #f1c40f;
+            --red: #e74c3c;
+        }
+        .monitoring-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .monitoring-card {
+            background: var(--sidebar-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-aman { background: rgba(46, 204, 113, 0.1); color: var(--green); border: 1px solid rgba(46, 204, 113, 0.3); }
+        .cctv-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        .cctv-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+        .cctv-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0,255,0,0.5);
+        }
+        .ai-prediction {
+            background: rgba(255, 77, 77, 0.05);
+            border: 1px dashed var(--accent);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .ai-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-content {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        @media (max-width: 900px) {
+            .monitoring-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
+        <div class="user-badge">{{ user.name[0] }}</div>
+    </header>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
+            <span>AEGIS</span>
+        </div>
+        <div class="user-profile">
+            <div class="user-name">{{ user.name }}</div>
+            <div class="user-npk">{{ user.employee_id }}</div>
+            <div class="user-role">{{ 'Tim KTD' if user.role == 'disaster' else 'Karyawan' }}</div>
+        </div>
+        <nav class="nav-menu">
+            <a href="{{ '/disaster/dashboard' if user.role == 'disaster' else '/' }}" class="nav-item">
+                <span>🏠</span> <span>Beranda</span>
+            </a>
+            <a href="/monitoring" class="nav-item active">
+                <span>📊</span> <span>Monitoring Hub</span>
+            </a>
+            <a href="/logout" class="btn-logout" style="margin-top: 2rem;">
+                <span>🚪</span> <span>Keluar Sistem</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <main class="dashboard-hub">
+            <div class="section-header">
+                <h2 class="section-title">Monitoring Hub Terpadu</h2>
+                <div class="status-badge status-normal">Sistem Online</div>
+            </div>
+
+            <div class="monitoring-grid">
+                <!-- Water Level Monitoring -->
+                <div class="monitoring-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Water Level Monitoring</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">DAM Tukad Badung</div>
+                        </div>
+                        <div class="status-pill status-aman">Aman (Normal)</div>
+                    </div>
+                    
+                    <div style="height: 200px; width: 100%;">
+                        <canvas id="waterLevelChart"></canvas>
+                    </div>
+
+                    <div class="ai-prediction">
+                        <div class="ai-title">🧠 PREDIKSI AI (6 JAM KE DEPAN)</div>
+                        <div class="ai-content">
+                            Berdasarkan tren saat ini dan data BMKG, ketinggian air diperkirakan akan <strong>stabil</strong>. 
+                            Probabilitas luapan < 5%. Status tetap <strong>AMAN</strong>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CCTV Monitoring -->
+                <div class="monitoring-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">CCTV AI Detection</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Sungai Denpasar (Area 1)</div>
+                        </div>
+                        <div class="status-pill status-aman">No Anomalies</div>
+                    </div>
+
+                    <div class="cctv-container">
+                        <img src="{{ url_for('static', path='images/cctv_dummy.png') }}" class="cctv-image" alt="CCTV Feed">
+                        <div class="cctv-overlay">
+                            <div>LIVE: CAM-01</div>
+                            <div id="cctv-time"></div>
+                        </div>
+                        <div style="position: absolute; bottom: 10px; left: 10px; padding: 4px 8px; background: rgba(0,0,0,0.6); border-radius: 4px; font-size: 0.6rem; color: #fff;">
+                            🔴 REC
+                        </div>
+                    </div>
+
+                    <div style="padding: 1rem; background: var(--input-bg); border-radius: 8px;">
+                        <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">Detection Status</div>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.8rem; color: var(--text-primary);">Object Level: <span style="color: var(--green);">35cm</span></div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Margin to Warning: 165cm</div>
+                            </div>
+                            <div style="width: 60px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                <div style="width: 20%; height: 100%; background: var(--green);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Nav (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="{{ '/disaster/dashboard' if user.role == 'disaster' else '/' }}" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Beranda</span>
+        </a>
+        <a href="/monitoring" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Monitor</span>
+        </a>
+        <a href="/logout" class="nav-item">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Keluar</span>
+        </a>
+    </nav>
+
+    <script>
+        // Real-time Clock for CCTV
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('cctv-time').innerText = `${dateString} | ${timeString}`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Chart.js implementation
+        const ctx = document.getElementById('waterLevelChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '00:00', '02:00', '04:00', '06:00'],
+                datasets: [{
+                    label: 'Ketinggian Air (cm)',
+                    data: [30, 32, 28, 35, 45, 52, 48, 40, 35, 30],
+                    borderColor: '#ff4d4d',
+                    backgroundColor: 'rgba(255, 77, 77, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { 
+                            color: '#94a3b8', 
+                            font: { size: 10 },
+                            callback: function(value) { return value + ' cm'; }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
