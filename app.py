@@ -569,6 +569,19 @@ async def preventive_dashboard(request: Request, db: Session = Depends(get_db)):
         "event": event
     })
 
+@app.get("/monitoring", response_class=HTMLResponse)
+async def monitoring_page(request: Request, db: Session = Depends(get_db)):
+    user_session = get_current_user_from_session(request)
+    if not user_session:
+        return RedirectResponse(url="/login")
+    
+    user = db.query(User).filter(User.employee_id == user_session["username"]).first()
+    
+    return templates.TemplateResponse("monitoring.html", {
+        "request": request, 
+        "user": user
+    })
+
 # ─── Preventive Checklist API ────────────────────────────────────────────────
 @app.get("/api/tasks/preventive")
 async def get_preventive_tasks(request: Request, db: Session = Depends(get_db)):
