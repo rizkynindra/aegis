@@ -13,7 +13,8 @@ from datetime import datetime, timedelta
 from pywebpush import webpush, WebPushException
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 from database import engine, Base, get_db, SessionLocal
 from database import User, TeamCategory, NotificationSetting, PushSubscription, ActivityLog, TaskTemplate, EmergencyEvent, EmergencyTask, AdHocReport, PreventiveTask, PreventiveReport
@@ -32,11 +33,17 @@ SESSION_SECRET = os.environ.get("SESSION_SECRET")
 BMKG_API_URL = os.environ.get("BMKG_API_URL")
 CRON_SECRET = os.environ.get("CRON_SECRET")
 
+def _thingsboard_config():
+    return {
+        "url": os.environ.get("THINGSBOARD_URL", "https://eu.thingsboard.cloud").rstrip("/"),
+        "device_id": os.environ.get("THINGSBOARD_DEVICE_ID"),
+        "api_key": os.environ.get("THINGSBOARD_API_KEY"),
+    }
+
 # ─── Middleware ──────────────────────────────────────────────────────────────
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 # ─── Templates & Static ─────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
@@ -196,6 +203,100 @@ async def get_weather():
             return response.json()
         except Exception as e:
             return {"error": str(e)}
+
+def _thingsboard_headers(api_key: str):
+    return {"X-Authorization": f"ApiKey {api_key}"}
+
+def _thingsboard_timeseries_url(base_url: str, device_id: str):
+    return f"{base_url}/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
+
+@app.get("/api/water-level/latest")
+async def get_water_level_latest(request: Request):
+    if not get_current_user_from_session(request):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    tb = _thingsboard_config()
+    if not tb["api_key"] or not tb["device_id"]:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "ThingsBoard credentials are not configured"},
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                _thingsboard_timeseries_url(tb["url"], tb["device_id"]),
+                headers=_thingsboard_headers(tb["api_key"]),
+                params={"keys": "tinggi,status"},
+            )
+            response.raise_for_status()
+            payload = response.json()
+
+        tinggi_points = payload.get("tinggi") or []
+        status_points = payload.get("status") or []
+        latest_tinggi = tinggi_points[0] if tinggi_points else None
+        latest_status = status_points[0] if status_points else None
+
+        return {
+            "tinggi": float(latest_tinggi["value"]) if latest_tinggi else None,
+            "status": latest_status["value"] if latest_status else None,
+            "ts": latest_tinggi["ts"] if latest_tinggi else (latest_status["ts"] if latest_status else None),
+            "device": "ESP32_Sungai",
+            "location": "DAM Tukad Badung",
+        }
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"error": str(e)})
+
+@app.get("/api/water-level/history")
+async def get_water_level_history(request: Request, hours: int = 6, limit: int = 500):
+    if not get_current_user_from_session(request):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    tb = _thingsboard_config()
+    if not tb["api_key"] or not tb["device_id"]:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "ThingsBoard credentials are not configured"},
+        )
+
+    hours = max(1, min(hours, 72))
+    limit = max(10, min(limit, 1000))
+    end_ts = int(datetime.utcnow().timestamp() * 1000)
+    start_ts = end_ts - (hours * 60 * 60 * 1000)
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.get(
+                _thingsboard_timeseries_url(tb["url"], tb["device_id"]),
+                headers=_thingsboard_headers(tb["api_key"]),
+                params={
+                    "keys": "tinggi",
+                    "startTs": start_ts,
+                    "endTs": end_ts,
+                    "limit": limit,
+                    "agg": "NONE",
+                    "orderBy": "ASC",
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+
+        points = payload.get("tinggi") or []
+        series = [
+            {"ts": point["ts"], "value": float(point["value"])}
+            for point in points
+            if point.get("value") is not None
+        ]
+
+        return {
+            "hours": hours,
+            "startTs": start_ts,
+            "endTs": end_ts,
+            "count": len(series),
+            "series": series,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"error": str(e)})
 
 @app.get("/api/active-conditions")
 async def get_active_conditions(db: Session = Depends(get_db)):

@@ -1,280 +1,284 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS - Monitoring Terpadu</title>
+    <title>Monitoring Hub - AEGIS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --green: #2ecc71;
-            --yellow: #f1c40f;
-            --red: #e74c3c;
-        }
         .monitoring-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 1.5rem;
-            margin-top: 1rem;
         }
         .monitoring-card {
-            background: var(--sidebar-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius);
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            gap: 1rem;
         }
         .card-title {
             font-size: 1rem;
             font-weight: 700;
             color: var(--text-primary);
         }
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
         .status-pill {
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.7rem;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
+            white-space: nowrap;
         }
-        .status-aman { background: rgba(46, 204, 113, 0.1); color: var(--green); border: 1px solid rgba(46, 204, 113, 0.3); }
-        .cctv-container {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid var(--border);
+        .status-aman {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid var(--green-border);
         }
-        .cctv-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
+        .status-waspada {
+            background: var(--yellow-bg);
+            color: var(--yellow);
+            border: 1px solid rgba(245, 158, 11, 0.35);
         }
-        .cctv-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
+        .status-bahaya {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid var(--red-border);
+        }
+        .water-metrics {
             display: flex;
             justify-content: space-between;
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #00ff00;
-            text-shadow: 0 0 5px rgba(0,255,0,0.5);
+            align-items: flex-end;
+            gap: 1rem;
         }
-        .ai-prediction {
-            background: rgba(255, 77, 77, 0.05);
-            border: 1px dashed var(--accent);
-            padding: 1rem;
-            border-radius: 8px;
+        .water-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
         }
-        .ai-title {
+        .water-value .unit {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+        .water-updated {
             font-size: 0.75rem;
-            font-weight: 800;
+            color: var(--text-muted);
+            text-align: right;
+        }
+        .sensor-status-box {
+            background: rgba(255, 77, 77, 0.05);
+            border: 1px dashed var(--border-active);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+        }
+        .sensor-status-title {
+            font-size: 0.75rem;
+            font-weight: 700;
             color: var(--accent);
             margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
-        .ai-content {
+        .sensor-status-content {
             font-size: 0.85rem;
             color: var(--text-secondary);
             line-height: 1.4;
         }
-        @media (max-width: 900px) {
-            .monitoring-grid {
-                grid-template-columns: 1fr;
-            }
+        .chart-wrap {
+            height: 280px;
+            width: 100%;
         }
     </style>
 </head>
+
 <body>
-    <!-- Mobile Header -->
-    <header class="mobile-header">
-        <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
-            <span>AEGIS</span>
-        </div>
-        <div class="user-badge">{{ user.name[0] }}</div>
-    </header>
-
-    <aside class="sidebar">
-        <div class="brand">
-            <img src="{{ url_for('static', path='images/logo.jpeg') }}" alt="AEGIS Logo" class="brand-logo-img">
-            <span>AEGIS</span>
-        </div>
-        <div class="user-profile">
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-npk">{{ user.employee_id }}</div>
-            <div class="user-role">{{ 'Tim KTD' if user.role == 'disaster' else 'Karyawan' }}</div>
-        </div>
-        <nav class="nav-menu">
-            <a href="{{ '/disaster/dashboard' if user.role == 'disaster' else '/' }}" class="nav-item">
-                <span>🏠</span> <span>Beranda</span>
-            </a>
-            <a href="/monitoring" class="nav-item active">
-                <span>📊</span> <span>Monitoring Hub</span>
-            </a>
-            <a href="/logout" class="btn-logout" style="margin-top: 2rem;">
-                <span>🚪</span> <span>Keluar Sistem</span>
-            </a>
-        </nav>
-    </aside>
-
-    <div class="main-wrapper">
-        <main class="dashboard-hub">
-            <div class="section-header">
-                <h2 class="section-title">Monitoring Hub Terpadu</h2>
-                <div class="status-badge status-normal">Sistem Online</div>
+    <div class="layout">
+        <header class="mobile-header">
+            <div class="sidebar-brand">
+                <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
+                <div class="brand-text">
+                    <h2>AEGIS</h2>
+                </div>
             </div>
+            <div class="user-avatar">{{ user.name[0] }}</div>
+        </header>
 
-            <div class="monitoring-grid">
-                <!-- Water Level Monitoring -->
-                <div class="monitoring-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Water Level Monitoring</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">DAM Tukad Badung</div>
-                        </div>
-                        <div class="status-pill status-aman">Aman (Normal)</div>
-                    </div>
-                    
-                    <div style="height: 200px; width: 100%;">
-                        <canvas id="waterLevelChart"></canvas>
-                    </div>
-
-                    <div class="ai-prediction">
-                        <div class="ai-title">🧠 PREDIKSI AI (6 JAM KE DEPAN)</div>
-                        <div class="ai-content">
-                            Berdasarkan tren saat ini dan data BMKG, ketinggian air diperkirakan akan <strong>stabil</strong>. 
-                            Probabilitas luapan < 5%. Status tetap <strong>AMAN</strong>.
-                        </div>
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <img src="{{ url_for('static', path='images/logo.png') }}" alt="AEGIS Logo" class="brand-logo-img">
+                    <div class="brand-text">
+                        <h2>AEGIS</h2>
+                        <span>Disaster Management System</span>
                     </div>
                 </div>
-
-                <!-- CCTV Monitoring -->
-                <div class="monitoring-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">CCTV AI Detection</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Sungai Denpasar (Area 1)</div>
-                        </div>
-                        <div class="status-pill status-aman">No Anomalies</div>
-                    </div>
-
-                    <div class="cctv-container">
-                        <img src="{{ url_for('static', path='images/cctv_dummy.png') }}" class="cctv-image" alt="CCTV Feed">
-                        <div class="cctv-overlay">
-                            <div>LIVE: CAM-01</div>
-                            <div id="cctv-time"></div>
-                        </div>
-                        <div style="position: absolute; bottom: 10px; left: 10px; padding: 4px 8px; background: rgba(0,0,0,0.6); border-radius: 4px; font-size: 0.6rem; color: #fff;">
-                            🔴 REC
-                        </div>
-                    </div>
-
-                    <div style="padding: 1rem; background: var(--input-bg); border-radius: 8px;">
-                        <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">Detection Status</div>
-                        <div style="display: flex; gap: 1rem; align-items: center;">
-                            <div style="flex: 1;">
-                                <div style="font-size: 0.8rem; color: var(--text-primary);">Object Level: <span style="color: var(--green);">35cm</span></div>
-                                <div style="font-size: 0.7rem; color: var(--text-muted);">Margin to Warning: 165cm</div>
-                            </div>
-                            <div style="width: 60px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                                <div style="width: 20%; height: 100%; background: var(--green);"></div>
+                <nav class="sidebar-nav">
+                    {% if user.role == 'admin' %}
+                    <div class="nav-label">Overview</div>
+                    <a href="/admin/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span> Dashboard
+                    </a>
+                    <a href="/monitoring" class="nav-item active">
+                        <span class="nav-icon">🌊</span> Monitoring Hub
+                    </a>
+                    <div class="nav-label">Manajemen</div>
+                    <a class="nav-item" href="/admin/dashboard#settings-section">
+                        <span class="nav-icon">⚙️</span> Pemicu Notifikasi
+                    </a>
+                    <a class="nav-item" href="/admin/dashboard#users-section">
+                        <span class="nav-icon">👥</span> Manajemen Pengguna
+                    </a>
+                    <a class="nav-item" href="/admin/dashboard#categories-section">
+                        <span class="nav-icon">🏷️</span> Kategori Tim KTD
+                    </a>
+                    <a class="nav-item" href="/admin/dashboard#leaders-section">
+                        <span class="nav-icon">👑</span> Manajemen Leader
+                    </a>
+                    <a class="nav-item" href="/admin/dashboard#logs-section">
+                        <span class="nav-icon">📋</span> Riwayat Aktivitas
+                    </a>
+                    <a class="nav-item" href="/admin/dashboard#photos-section">
+                        <span class="nav-icon">📸</span> Laporan Foto
+                    </a>
+                    {% else %}
+                    <div class="nav-label">Menu</div>
+                    <a href="{% if user.role == 'disaster' %}/disaster/dashboard{% else %}/{% endif %}" class="nav-item">
+                        <span class="nav-icon">🏠</span> Beranda
+                    </a>
+                    <a href="/monitoring" class="nav-item active">
+                        <span class="nav-icon">🌊</span> Monitoring Hub
+                    </a>
+                    <a href="/logout" class="nav-item">
+                        <span class="nav-icon">🚪</span> Keluar
+                    </a>
+                    {% endif %}
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-profile">
+                        <div class="user-avatar">{{ user.name[0] }}</div>
+                        <div class="user-info">
+                            <div class="user-name">{{ user.name }}</div>
+                            <div class="user-role">
+                                {% if user.role == 'admin' %}Administrator
+                                {% elif user.role == 'disaster' %}Tim KTD
+                                {% else %}Karyawan{% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </aside>
+
+            <nav class="bottom-nav">
+                {% if user.role == 'admin' %}
+                <a href="/admin/dashboard" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="/monitoring" class="nav-item active">
+                    <span class="nav-icon">🌊</span>
+                    <span class="nav-label">Monitor</span>
+                </a>
+                <a href="/admin/dashboard#users-section" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">Users</span>
+                </a>
+                <a href="/admin/dashboard#categories-section" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-label">Teams</span>
+                </a>
+                <a href="/logout" class="nav-item">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-label">Logout</span>
+                </a>
+                {% else %}
+                <a href="{% if user.role == 'disaster' %}/disaster/dashboard{% else %}/{% endif %}" class="nav-item">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Beranda</span>
+                </a>
+                <a href="/monitoring" class="nav-item active">
+                    <span class="nav-icon">🌊</span>
+                    <span class="nav-label">Monitor</span>
+                </a>
+                <a href="/logout" class="nav-item">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-label">Keluar</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <main class="main-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <div>
+                        <h1 style="font-size:1.75rem; font-weight:700; letter-spacing:-0.5px;">Monitoring Hub</h1>
+                        <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0.25rem;">
+                            Pemantauan ketinggian air real-time dari ThingsBoard (ESP32_Sungai).
+                        </p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem; font-size:0.85rem; color:var(--text-secondary);">
+                        <span>Halo, <strong style="color:var(--text-primary);">{{ user.name }}</strong></span>
+                        <a href="/logout" class="btn-logout">Keluar</a>
+                    </div>
+                </div>
+
+                <div class="monitoring-grid">
+                    <div class="monitoring-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Water Level Monitoring</div>
+                                <div class="card-subtitle">DAM Tukad Badung · ESP32_Sungai</div>
+                            </div>
+                            <div id="water-level-status" class="status-pill status-waspada">Memuat...</div>
+                        </div>
+
+                        <div class="water-metrics">
+                            <div>
+                                <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">
+                                    Ketinggian Saat Ini
+                                </div>
+                                <div class="water-value">
+                                    <span id="water-level-value">--</span><span class="unit">cm</span>
+                                </div>
+                            </div>
+                            <div id="water-level-updated" class="water-updated">Menghubungkan ke ThingsBoard...</div>
+                        </div>
+
+                        <div class="chart-wrap">
+                            <canvas id="waterLevelChart"></canvas>
+                        </div>
+
+                        <div class="sensor-status-box">
+                            <div class="sensor-status-title">📡 STATUS SENSOR (LIVE)</div>
+                            <div id="water-level-summary" class="sensor-status-content">
+                                Memuat data ketinggian air dari ThingsBoard...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
-    <!-- Bottom Nav (Mobile) -->
-    <nav class="bottom-nav">
-        <a href="{{ '/disaster/dashboard' if user.role == 'disaster' else '/' }}" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span class="nav-label">Beranda</span>
-        </a>
-        <a href="/monitoring" class="nav-item active">
-            <span class="nav-icon">📊</span>
-            <span class="nav-label">Monitor</span>
-        </a>
-        <a href="/logout" class="nav-item">
-            <span class="nav-icon">🚪</span>
-            <span class="nav-label">Keluar</span>
-        </a>
-    </nav>
-
-    <script>
-        // Real-time Clock for CCTV
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateString = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            document.getElementById('cctv-time').innerText = `${dateString} | ${timeString}`;
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
-
-        // Chart.js implementation
-        const ctx = document.getElementById('waterLevelChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '00:00', '02:00', '04:00', '06:00'],
-                datasets: [{
-                    label: 'Ketinggian Air (cm)',
-                    data: [30, 32, 28, 35, 45, 52, 48, 40, 35, 30],
-                    borderColor: '#ff4d4d',
-                    backgroundColor: 'rgba(255, 77, 77, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 10 } }
-                    },
-                    y: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { 
-                            color: '#94a3b8', 
-                            font: { size: 10 },
-                            callback: function(value) { return value + ' cm'; }
-                        }
-                    }
-                }
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', path='js/monitoring.js') }}"></script>
 </body>
+
 </html>
