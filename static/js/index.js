@@ -170,13 +170,6 @@ function initModal() {
     };
 }
 
-// PWA update logic
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => { reg.update(); });
-    });
-}
-
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     fetchWeather();

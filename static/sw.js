@@ -1,90 +1,133 @@
-const CACHE_NAME = 'aegis-app-v1';
-const ASSETS_TO_CACHE = [
-    '/',
-    '/static/js/script.js',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap'
+const CACHE_NAME = 'aegis-v2';
+
+const PRECACHE_URLS = [
+    '/login',
+    '/manifest.json',
+    '/static/offline.html',
+    '/static/js/pwa.js',
+    '/static/css/login.css',
+    '/static/icons/icon-192.png',
+    '/static/icons/icon-512.png',
+    '/static/icons/apple-touch-icon.png',
+    '/static/images/logo.png',
 ];
 
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // Force the waiting service worker to become the active service worker
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
+        caches.open(CACHE_NAME).then((cache) =>
+            Promise.all(
+                PRECACHE_URLS.map((url) =>
+                    cache.add(url).catch((error) => {
+                        console.warn('Precache skipped', url, error);
+                    })
+                )
+            )
+        ).then(() => self.skipWaiting())
     );
 });
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cache) => {
-                    if (cache !== CACHE_NAME) {
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
+        caches.keys().then((cacheNames) =>
+            Promise.all(
+                cacheNames
+                    .filter((name) => name !== CACHE_NAME)
+                    .map((name) => caches.delete(name))
+            )
+        ).then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+    const { request } = event;
+    if (request.method !== 'GET') return;
 
-    // Network First for the root page to ensure latest content if online
-    if (url.origin === location.origin && url.pathname === '/') {
-        event.respondWith(
-            fetch(event.request)
-                .then((response) => {
-                    const resClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, resClone);
-                    });
-                    return response;
-                })
-                .catch(() => caches.match(event.request))
-        );
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+    if (url.pathname.startsWith('/api/')) return;
+
+    if (request.mode === 'navigate') {
+        event.respondWith(networkFirst(request));
         return;
     }
 
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        })
-    );
+    if (url.pathname.startsWith('/static/')) {
+        const cachePromise = caches.open(CACHE_NAME);
+        const cachedPromise = cachePromise.then((cache) => cache.match(request));
+        const networkPromise = fetch(request)
+            .then(async (response) => {
+                if (response.ok) {
+                    const cache = await cachePromise;
+                    await cache.put(request, response.clone());
+                }
+                return response;
+            })
+            .catch(() => null);
+
+        event.waitUntil(networkPromise.then(() => undefined));
+        event.respondWith(
+            cachedPromise.then(async (cached) => {
+                if (cached) return cached;
+                return (await networkPromise) || offlineResponse();
+            })
+        );
+    }
 });
+
+async function networkFirst(request) {
+    try {
+        const response = await fetch(request);
+        if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+        }
+        return response;
+    } catch (error) {
+        const cached = await caches.match(request);
+        return cached || (await caches.match('/static/offline.html')) || offlineResponse();
+    }
+}
+
+function offlineResponse() {
+    return new Response('Offline', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+}
 
 self.addEventListener('push', (event) => {
     let data = { title: 'AEGIS Alert', body: 'Ada aktivitas baru di sistem.' };
     try {
         data = event.data ? event.data.json() : data;
-    } catch (e) {
-        data = { title: 'AEGIS Alert', body: event.data.text() };
+    } catch (error) {
+        data = { title: 'AEGIS Alert', body: event.data ? event.data.text() : data.body };
     }
 
-    const options = {
-        body: data.body,
-        icon: '/static/icons/icon-192x192.png',
-        badge: '/static/icons/icon-72x72.png',
-        vibrate: [200, 100, 200, 100, 200],
-        tag: 'aegis-notification',
-        renotify: true,
-        data: {
-            url: '/'
-        },
-        actions: [
-            { action: 'open', title: 'Buka Dashboard' }
-        ]
-    };
-
     event.waitUntil(
-        self.registration.showNotification(data.title, options)
+        self.registration.showNotification(data.title, {
+            body: data.body,
+            icon: '/static/icons/icon-192.png',
+            badge: '/static/icons/icon-192.png',
+            vibrate: [200, 100, 200],
+            tag: 'aegis-notification',
+            renotify: true,
+            data: { url: data.url || '/' },
+        })
     );
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+
     event.waitUntil(
-        clients.openWindow(event.notification.data.url)
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (const client of windowClients) {
+                if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            return self.clients.openWindow(targetUrl);
+        })
     );
 });
