@@ -92,7 +92,7 @@ async def startup_event():
 async def read_item(request: Request):
     user = get_current_user_from_session(request)
     if not user:
-        return RedirectResponse(url="/login")
+        return templates.TemplateResponse("login.html", {"request": request})
     if user.get("role") == "admin":
         return RedirectResponse(url="/admin/dashboard", status_code=303)
     if user.get("role") == "disaster":
@@ -191,7 +191,10 @@ async def manifest():
     return FileResponse(
         os.path.join(BASE_DIR, "static", "manifest.json"),
         media_type="application/manifest+json",
-        headers={"Cache-Control": "no-cache"},
+        headers={
+            "Cache-Control": "no-cache",
+            "Access-Control-Allow-Origin": "*",
+        },
     )
 
 @app.get("/sw.js")
