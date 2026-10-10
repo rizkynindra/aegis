@@ -188,11 +188,19 @@ async def notify_all_endpoint(title: str = Form(...), message: str = Form(...), 
 
 @app.get("/manifest.json")
 async def manifest():
-    return FileResponse(os.path.join("static", "manifest.json"))
+    return FileResponse(
+        os.path.join(BASE_DIR, "static", "manifest.json"),
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 @app.get("/sw.js")
 async def service_worker():
-    return FileResponse(os.path.join("static", "sw.js"), media_type="application/javascript")
+    return FileResponse(
+        os.path.join(BASE_DIR, "static", "sw.js"),
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+    )
 
 @app.get("/api/weather")
 async def get_weather():
